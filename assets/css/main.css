@@ -512,9 +512,11 @@ img {
   border-radius: var(--radius-md);
   height: 160px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  overflow: hidden;
+  overflow-y: auto;
+  padding: 0.5rem;
 }
 
 #lesson-staff-area {
