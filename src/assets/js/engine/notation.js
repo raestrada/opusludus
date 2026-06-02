@@ -224,6 +224,7 @@ export class NotationRenderer {
       }
     }
 
+    this.addHitboxes();
     return this;
   }
 
@@ -372,7 +373,43 @@ export class NotationRenderer {
       }
     }
 
+    this.addHitboxes();
     return this;
+  }
+
+  addHitboxes() {
+    // Wait a short time for VexFlow to finish drawing paths in DOM
+    setTimeout(() => {
+      const container = document.getElementById(this.containerId);
+      if (!container) return;
+      
+      const noteGroups = container.querySelectorAll(".vf-stavenote");
+      noteGroups.forEach(group => {
+        // Prevent duplicate overlays
+        if (group.querySelector(".note-hitbox")) return;
+        
+        try {
+          const bbox = group.getBBox();
+          if (bbox.width === 0 || bbox.height === 0) return;
+          
+          const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          rect.setAttribute("class", "note-hitbox");
+          rect.setAttribute("x", bbox.x - 8);
+          // 100px vertical hit column centered on the note makes clicking a breeze
+          const targetHeight = Math.max(100, bbox.height + 24);
+          const yOffset = bbox.y - (targetHeight - bbox.height) / 2;
+          rect.setAttribute("y", yOffset);
+          rect.setAttribute("width", bbox.width + 16);
+          rect.setAttribute("height", targetHeight);
+          rect.setAttribute("fill", "transparent");
+          rect.setAttribute("style", "cursor: pointer; pointer-events: all;");
+          
+          group.appendChild(rect);
+        } catch (e) {
+          // getBBox might fail if the SVG is detached or not yet visible
+        }
+      });
+    }, 50);
   }
 
   resize(width, height) {
