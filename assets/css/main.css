@@ -1010,7 +1010,7 @@ img {
 
 /* Result Overlay modal */
 .result-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(10, 10, 26, 0.85);
   backdrop-filter: blur(8px);
