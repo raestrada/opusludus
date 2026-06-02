@@ -241,6 +241,12 @@ export class NotationRenderer {
     const keySig = mod.keySignature || "C";
     const measuresPerLine = 4;
 
+    const numLines = Math.ceil(measures.length / measuresPerLine);
+    const requiredHeight = 40 + numLines * 120 + 20;
+    if (this.options.height < requiredHeight) {
+      this.resize(this.options.width, requiredHeight);
+    }
+
     for (let lineIdx = 0; lineIdx < Math.ceil(measures.length / measuresPerLine); lineIdx++) {
       const lineMeasures = measures.slice(
         lineIdx * measuresPerLine,

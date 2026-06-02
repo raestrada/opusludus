@@ -34,6 +34,7 @@ let isPlayingAnalysis = false;
 let analysisPlayTimeout = null;
 let analysisAudio = null;
 let analysisRenderer = null;
+let fullScoreRenderer = null;
 
 const VALIDATION_TRANSLATIONS = {
   "All notes must be within the staff range.": "Todas las notas deben estar dentro del rango del pentagrama.",
@@ -397,6 +398,40 @@ function loadLesson() {
 
   if (playBtn) playBtn.addEventListener("click", handlePlayExample);
   if (stopBtn) stopBtn.addEventListener("click", handleStopExample);
+
+  // Full Score Zoom setup
+  const zoomBtn = document.getElementById("lesson-btn-zoom-example");
+  const fullScoreModal = document.getElementById("full-score-modal");
+  const fullScoreClose = document.getElementById("full-score-modal-close");
+
+  if (zoomBtn && fullScoreModal && fullScoreClose && exampleComp) {
+    zoomBtn.addEventListener("click", () => {
+      if (isPlayingExample) {
+        handleStopExample();
+      }
+      fullScoreModal.classList.remove("hidden");
+      if (fullScoreRenderer) {
+        fullScoreRenderer.destroy();
+      }
+      fullScoreRenderer = new NotationRenderer("full-score-staff-area", {
+        clef: exampleComp.clef || "treble",
+        timeSignature: exampleComp.timeSignature || [4, 4],
+        keySignature: exampleComp.keySignature || "C",
+        width: 800,
+        height: 200
+      });
+      fullScoreRenderer.setup();
+      fullScoreRenderer.renderFull(exampleComp);
+    });
+
+    fullScoreClose.addEventListener("click", () => {
+      fullScoreModal.classList.add("hidden");
+      if (fullScoreRenderer) {
+        fullScoreRenderer.destroy();
+        fullScoreRenderer = null;
+      }
+    });
+  }
 
   // Populate challenge validations/rules inside Step 2
   const populateChallengeView = () => {
@@ -1542,6 +1577,13 @@ window.addEventListener("beforeunload", () => {
   if (analysisAudio) {
     try {
       analysisAudio.dispose();
+    } catch (e) {
+      // Ignore
+    }
+  }
+  if (fullScoreRenderer) {
+    try {
+      fullScoreRenderer.destroy();
     } catch (e) {
       // Ignore
     }
