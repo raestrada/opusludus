@@ -1211,7 +1211,7 @@ img {
   }
 
   #opus-staff-area {
-    height: 180px;
+    height: 160px;
   }
 }
 
@@ -1678,14 +1678,14 @@ body.play-page-active {
   justify-content: center;
   align-items: center;
   flex: 1;
-  min-height: 190px;
+  min-height: 210px;
   overflow: hidden;
 }
 
 #opus-staff-area {
   width: 100%;
   max-width: 800px;
-  height: 180px !important;
+  height: 160px !important;
   background: #141430;
   border: 1px solid rgba(42, 42, 72, 0.5);
   box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
