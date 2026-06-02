@@ -2,9 +2,10 @@
 import { GameManager } from "./game/GameManager";
 import { getAudioEngine } from "./engine/audio";
 import { NotationRenderer } from "./engine/notation";
-import { loadProgress, getStreak } from "./store/progress";
+import { loadProgress, getStreak, saveModuleResult, calculateXp } from "./store/progress";
 import { nameToMidi } from "./engine/theory";
 import { LESSONS } from "./store/lessons";
+import { ANALYSIS_CHALLENGES } from "./store/analysis";
 
 const CONFIG = window.__OPUS_LUDUS__ || {};
 const curriculum = CONFIG.curriculum || [];
@@ -24,6 +25,15 @@ let isPlayingExample = false;
 let examplePlayTimeout = null;
 let activeLesson = null;
 let activeAids = { piano: false, errors: false, suggest: false };
+
+// Masterpiece Analysis variables
+let activeChallenge = null;
+let activeComposition = null;
+let selectedNoteAddress = null;
+let isPlayingAnalysis = false;
+let analysisPlayTimeout = null;
+let analysisAudio = null;
+let analysisRenderer = null;
 
 const VALIDATION_TRANSLATIONS = {
   "All notes must be within the staff range.": "Todas las notas deben estar dentro del rango del pentagrama.",
@@ -1083,14 +1093,423 @@ function showResultModal(submitResult) {
   modal.classList.remove("hidden");
 }
 
+function initAnalysisPage() {
+  const masterpieceListContainer = document.getElementById("masterpiece-list");
+  const emptyState = document.getElementById("analysis-empty-state");
+  const contentPanel = document.getElementById("analysis-content");
+  
+  analysisAudio = getAudioEngine();
+  analysisAudio.init("synth").catch((err) => {
+    console.warn("Audio engine init failed for analysis:", err);
+  });
+  
+  // Render sidebar catalog
+  function renderSidebar() {
+    if (!masterpieceListContainer) return;
+    masterpieceListContainer.innerHTML = "";
+    
+    ANALYSIS_CHALLENGES.forEach((challenge) => {
+      const card = document.createElement("div");
+      card.className = "masterpiece-card";
+      card.dataset.id = challenge.id;
+      
+      const difficultyClass = challenge.difficulty.en.toLowerCase();
+      
+      const progress = loadProgress();
+      const userProgress = progress.modules[challenge.id] || null;
+      let statusHtml = "";
+      if (userProgress && userProgress.completed) {
+        statusHtml = `<div class="card-status">${locale === 'es' ? 'Completado' : 'Completed'} ${"★".repeat(userProgress.stars)}${"☆".repeat(3 - userProgress.stars)}</div>`;
+      }
+      
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="difficulty ${difficultyClass}">${challenge.difficulty[locale]}</span>
+          <span class="concept">${challenge.concept[locale]}</span>
+        </div>
+        <h3>${challenge.name[locale]}</h3>
+        ${statusHtml}
+      `;
+      
+      card.addEventListener("click", () => {
+        masterpieceListContainer.querySelectorAll(".masterpiece-card").forEach(c => c.classList.remove("selected"));
+        card.classList.add("selected");
+        loadChallenge(challenge);
+      });
+      
+      masterpieceListContainer.appendChild(card);
+    });
+  }
+  
+  function highlightSelectedNote() {
+    if (!selectedNoteAddress) return;
+    const { measure, voice, noteIdx } = selectedNoteAddress;
+    const noteId = `vf-analysis-staff-area-m${measure}-v${voice}-n${noteIdx}`;
+    
+    document.querySelectorAll(".selected-analysis-note").forEach(el => el.classList.remove("selected-analysis-note"));
+    
+    const el = document.getElementById(noteId);
+    if (el) {
+      el.classList.add("selected-analysis-note");
+    }
+  }
+
+  function loadChallenge(challenge) {
+    if (isPlayingAnalysis) {
+      stopPlayback();
+    }
+    
+    activeChallenge = challenge;
+    activeComposition = JSON.parse(JSON.stringify(challenge.composition));
+    selectedNoteAddress = null;
+    
+    if (emptyState) emptyState.classList.add("hidden");
+    if (contentPanel) contentPanel.classList.remove("hidden");
+    
+    const titleEl = document.getElementById("challenge-title");
+    const conceptEl = document.getElementById("challenge-concept");
+    const difficultyEl = document.getElementById("challenge-difficulty");
+    const descriptionEl = document.getElementById("challenge-description");
+    
+    if (titleEl) titleEl.textContent = challenge.name[locale];
+    if (conceptEl) conceptEl.textContent = challenge.concept[locale];
+    if (difficultyEl) {
+      difficultyEl.textContent = challenge.difficulty[locale];
+      difficultyEl.className = `difficulty-badge ${challenge.difficulty.en.toLowerCase()}`;
+    }
+    if (descriptionEl) descriptionEl.textContent = challenge.description[locale];
+    
+    if (analysisRenderer) {
+      analysisRenderer.destroy();
+    }
+    
+    analysisRenderer = new NotationRenderer("analysis-staff-area", {
+      clef: activeComposition.clef || "treble",
+      timeSignature: activeComposition.timeSignature || [4, 4],
+      keySignature: activeComposition.keySignature || "C",
+      width: 800,
+      height: activeComposition.clef === "grand" ? 220 : 150
+    });
+    
+    analysisRenderer.setup();
+    analysisRenderer.renderFull(activeComposition);
+    
+    const badgesGroup = document.getElementById("available-note-badges");
+    if (badgesGroup) {
+      badgesGroup.innerHTML = "";
+      challenge.availableNotes.forEach((noteName) => {
+        const btn = document.createElement("button");
+        btn.className = "note-badge-btn";
+        btn.textContent = noteName.replace("b", "♭").replace("#", "♯");
+        
+        btn.addEventListener("click", () => {
+          if (selectedNoteAddress) {
+            const { measure, voice, noteIdx } = selectedNoteAddress;
+            const noteObj = activeComposition.measures[measure].voices[voice][noteIdx];
+            noteObj.pitch = noteName;
+            
+            const accMatch = noteName.match(/^[A-G]([#b])/);
+            if (accMatch) {
+              noteObj.accidental = accMatch[1];
+            } else {
+              delete noteObj.accidental;
+            }
+            
+            badgesGroup.querySelectorAll(".note-badge-btn").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            
+            analysisAudio.playNote(noteName);
+            analysisRenderer.renderFull(activeComposition);
+            highlightSelectedNote();
+          } else {
+            const feedbackText = locale === 'es' 
+              ? "Selecciona primero una nota en el pentagrama para cambiar su altura." 
+              : "Select a note on the staff first to edit its pitch.";
+            showAnalysisFeedback(feedbackText, "error");
+          }
+        });
+        
+        badgesGroup.appendChild(btn);
+      });
+    }
+    
+    const questionTextEl = document.getElementById("question-text");
+    const optionsGroupEl = document.getElementById("question-form");
+    
+    if (questionTextEl) questionTextEl.textContent = challenge.question[locale];
+    if (optionsGroupEl) {
+      optionsGroupEl.innerHTML = "";
+      challenge.question.options.forEach((opt, idx) => {
+        const label = document.createElement("label");
+        label.className = "option-container";
+        label.setAttribute("for", `opt-${idx}`);
+        
+        label.innerHTML = `
+          <input type="radio" name="analysis-option" id="opt-${idx}" value="${idx}">
+          <span>${opt[locale]}</span>
+        `;
+        
+        const radio = label.querySelector('input[type="radio"]');
+        radio.addEventListener("change", () => {
+          optionsGroupEl.querySelectorAll(".option-container").forEach(c => c.classList.remove("selected"));
+          label.classList.add("selected");
+        });
+        
+        optionsGroupEl.appendChild(label);
+      });
+    }
+    
+    showAnalysisFeedback("", "info");
+  }
+  
+  function showAnalysisFeedback(text, type = "info") {
+    let fb = document.getElementById("analysis-feedback-container");
+    if (!fb) {
+      fb = document.createElement("div");
+      fb.id = "analysis-feedback-container";
+      fb.className = "feedback-area";
+      const actionArea = document.querySelector(".analysis-actions");
+      if (actionArea) {
+        actionArea.parentNode.insertBefore(fb, actionArea);
+      }
+    }
+    if (fb) {
+      fb.className = `feedback-area ${type}`;
+      fb.textContent = text;
+      fb.style.display = text ? "block" : "none";
+      fb.style.marginBottom = text ? "1.5rem" : "0";
+    }
+  }
+  
+  const playBtn = document.getElementById("btn-play-analysis");
+  const stopBtn = document.getElementById("btn-stop-analysis");
+  
+  function startPlayback() {
+    if (!activeComposition) return;
+    if (playBtn) playBtn.classList.add("hidden");
+    if (stopBtn) stopBtn.classList.remove("hidden");
+    
+    isPlayingAnalysis = true;
+    analysisAudio.loadComposition(activeComposition, "analysis-staff-area");
+    analysisAudio.play();
+    
+    const timeSig = activeComposition.timeSignature || [4, 4];
+    const bpm = 100;
+    const durationSec = activeComposition.measures.length * timeSig[0] * (60 / bpm);
+    
+    if (analysisPlayTimeout) clearTimeout(analysisPlayTimeout);
+    analysisPlayTimeout = setTimeout(() => {
+      stopPlayback();
+    }, durationSec * 1000 + 300);
+  }
+  
+  function stopPlayback() {
+    if (playBtn) playBtn.classList.remove("hidden");
+    if (stopBtn) stopBtn.classList.add("hidden");
+    
+    isPlayingAnalysis = false;
+    analysisAudio.stop();
+    if (analysisPlayTimeout) {
+      clearTimeout(analysisPlayTimeout);
+      analysisPlayTimeout = null;
+    }
+  }
+  
+  if (playBtn) playBtn.addEventListener("click", startPlayback);
+  if (stopBtn) stopBtn.addEventListener("click", stopPlayback);
+  
+  const staffArea = document.getElementById("analysis-staff-area");
+  if (staffArea) {
+    staffArea.addEventListener("click", (e) => {
+      if (isPlayingAnalysis) return;
+      
+      let target = e.target;
+      while (target && target !== staffArea) {
+        if (target.id && (target.id.startsWith("vf-analysis-staff-area-m") || target.id.startsWith("analysis-staff-area-m"))) {
+          const id = target.id;
+          const match = id.match(/m(\d+)-v(\d+)-n(\d+)/);
+          if (match) {
+            const measure = parseInt(match[1]);
+            const voice = parseInt(match[2]);
+            const noteIdx = parseInt(match[3]);
+            
+            selectedNoteAddress = { measure, voice, noteIdx };
+            highlightSelectedNote();
+            
+            const noteObj = activeComposition.measures[measure].voices[voice][noteIdx];
+            const badgesGroup = document.getElementById("available-note-badges");
+            if (badgesGroup) {
+              badgesGroup.querySelectorAll(".note-badge-btn").forEach(b => {
+                b.classList.remove("selected");
+                if (noteObj.pitch && b.textContent === noteObj.pitch.replace("b", "♭").replace("#", "♯")) {
+                  b.classList.add("selected");
+                }
+              });
+            }
+            
+            if (noteObj.pitch) {
+              analysisAudio.playNote(noteObj.pitch);
+            }
+            return;
+          }
+        }
+        target = target.parentElement;
+      }
+    });
+  }
+  
+  const resetBtn = document.getElementById("btn-reset-analysis");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (!activeChallenge) return;
+      if (confirm(locale === 'es' ? "¿Seguro que quieres reiniciar este desafío?" : "Are you sure you want to reset this challenge?")) {
+        loadChallenge(activeChallenge);
+      }
+    });
+  }
+  
+  const submitBtn = document.getElementById("btn-submit-analysis");
+  if (submitBtn) {
+    submitBtn.addEventListener("click", () => {
+      if (!activeChallenge || !activeComposition) return;
+      
+      if (isPlayingAnalysis) {
+        stopPlayback();
+      }
+      
+      let reconstructionCorrect = true;
+      const expectedReconstruction = activeChallenge.expectedAnswers.reconstruction;
+      
+      for (const expected of expectedReconstruction) {
+        const m = expected.measure;
+        const v = expected.voice;
+        const n = expected.noteIdx;
+        const note = activeComposition.measures[m]?.voices[v]?.[n];
+        
+        if (!note || note.pitch !== expected.pitch) {
+          reconstructionCorrect = false;
+          break;
+        }
+      }
+      
+      const selectedRadio = document.querySelector('input[name="analysis-option"]:checked');
+      let questionCorrect = false;
+      
+      if (selectedRadio) {
+        const optIdx = parseInt(selectedRadio.value);
+        const opt = activeChallenge.question.options[optIdx];
+        if (opt && opt.correct) {
+          questionCorrect = true;
+        }
+      }
+      
+      let stars = 0;
+      let feedback = "";
+      
+      if (reconstructionCorrect && questionCorrect) {
+        stars = 3;
+        feedback = locale === 'es' 
+          ? "¡Desafío completado! Has corregido la obra maestra y respondido la pregunta teórica a la perfección." 
+          : "Challenge completed! You corrected the masterpiece and answered the theoretical question perfectly.";
+      } else if (reconstructionCorrect) {
+        stars = 2;
+        feedback = locale === 'es' 
+          ? "¡Casi listo! La reconstrucción de la partitura es correcta, pero la respuesta a la pregunta teórica no es correcta." 
+          : "Almost done! The notation correction is correct, but your answer to the theoretical question is incorrect.";
+      } else if (questionCorrect) {
+        stars = 1;
+        feedback = locale === 'es' 
+          ? "¡Cerca! Has respondido correctamente la pregunta teórica, pero la partitura aún contiene errores." 
+          : "Close! You answered the theoretical question correctly, but the score still contains errors.";
+      } else {
+        stars = 0;
+        feedback = locale === 'es' 
+          ? "Inténtalo de nuevo. Analiza la partitura para encontrar los errores y revisa los conceptos teóricos." 
+          : "Try again. Analyze the score to find the errors and review the theoretical concepts.";
+      }
+      
+      const streak = getStreak();
+      const scorePercent = stars === 3 ? 100 : (stars === 2 ? 75 : (stars === 1 ? 50 : 0));
+      const xpEarned = calculateXp(activeChallenge.xpBase, scorePercent, streak);
+      
+      if (stars > 0) {
+        saveModuleResult(activeChallenge.id, stars, xpEarned);
+      }
+      
+      showAnalysisResultModal(stars, xpEarned, feedback);
+      renderSidebar();
+    });
+  }
+  
+  const resultModal = document.getElementById("analysis-result-modal");
+  const resultBtnClose = document.getElementById("result-btn-close");
+  
+  function showAnalysisResultModal(stars, xpEarned, feedbackText) {
+    if (!resultModal) return;
+    
+    const iconEl = document.getElementById("result-icon");
+    const titleEl = document.getElementById("result-title");
+    const feedbackEl = document.getElementById("result-feedback");
+    const xpEl = document.getElementById("result-xp");
+    const starsContainer = document.getElementById("result-stars");
+    
+    if (iconEl) {
+      iconEl.textContent = stars >= 2 ? "🎉" : (stars === 1 ? "👍" : "✍️");
+    }
+    
+    if (titleEl) {
+      if (stars === 3) {
+        titleEl.textContent = locale === 'es' ? "¡Perfecto!" : "Perfect!";
+      } else if (stars === 2) {
+        titleEl.textContent = locale === 'es' ? "¡Excelente!" : "Excellent!";
+      } else if (stars === 1) {
+        titleEl.textContent = locale === 'es' ? "¡Bien hecho!" : "Well done!";
+      } else {
+        titleEl.textContent = locale === 'es' ? "Sigue practicando" : "Keep practicing";
+      }
+    }
+    
+    if (feedbackEl) feedbackEl.textContent = feedbackText;
+    if (xpEl) xpEl.textContent = `+${xpEarned} XP`;
+    
+    if (starsContainer) {
+      starsContainer.innerHTML = "";
+      for (let i = 0; i < 3; i++) {
+        const star = document.createElement("span");
+        star.className = `modal-star ${i < stars ? 'active' : ''}`;
+        star.textContent = "★";
+        starsContainer.appendChild(star);
+      }
+    }
+    
+    resultModal.classList.remove("hidden");
+  }
+  
+  if (resultBtnClose) {
+    resultBtnClose.addEventListener("click", () => {
+      if (resultModal) resultModal.classList.add("hidden");
+    });
+  }
+  
+  renderSidebar();
+}
+
 // Start game when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  // Load the lesson stage first
-  try {
-    loadLesson();
-  } catch (err) {
-    console.error("Error al cargar la lección de teoría:", err);
-    showFeedback("Error al inicializar la lección teórica.", "error");
+  if (CONFIG.page === "analysis") {
+    try {
+      initAnalysisPage();
+    } catch (err) {
+      console.error("Error al cargar la página de análisis:", err);
+    }
+  } else {
+    // Load the lesson stage first
+    try {
+      loadLesson();
+    } catch (err) {
+      console.error("Error al cargar la lección de teoría:", err);
+      showFeedback("Error al inicializar la lección teórica.", "error");
+    }
   }
 });
 
@@ -1098,6 +1517,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("beforeunload", () => {
   if (playTimeout) clearTimeout(playTimeout);
   if (examplePlayTimeout) clearTimeout(examplePlayTimeout);
+  if (analysisPlayTimeout) clearTimeout(analysisPlayTimeout);
   if (gameManager) {
     try {
       gameManager.dispose();
@@ -1108,6 +1528,20 @@ window.addEventListener("beforeunload", () => {
   if (lessonRenderer) {
     try {
       lessonRenderer.destroy();
+    } catch (e) {
+      // Ignore
+    }
+  }
+  if (analysisRenderer) {
+    try {
+      analysisRenderer.destroy();
+    } catch (e) {
+      // Ignore
+    }
+  }
+  if (analysisAudio) {
+    try {
+      analysisAudio.dispose();
     } catch (e) {
       // Ignore
     }

@@ -1,0 +1,139 @@
+---
+layout: layouts/base.njk
+title: Opus Ludus — Masterpiece Analysis
+---
+
+<div class="analysis-page" style="--analysis-bg-url: url('{{ pathPrefix }}/assets/images/analysis_bg.png');">
+  <div class="analysis-container">
+    
+    <!-- Left Sidebar: Masterpieces Catalog -->
+    <aside class="analysis-sidebar">
+      <div class="sidebar-header">
+        <h2>{% if locale == 'es' %}Obras Maestras{% else %}Masterpieces{% endif %}</h2>
+        <p>{% if locale == 'es' %}Selecciona una obra para analizar y reconstruir{% else %}Select a piece to analyze & reconstruct{% endif %}</p>
+      </div>
+      
+      <div class="masterpiece-list" id="masterpiece-list">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </aside>
+    
+    <!-- Right Panel: Workstation -->
+    <main class="analysis-workstation">
+      <div class="workstation-card glass-panel" id="analysis-empty-state">
+        <div class="empty-content">
+          <span class="empty-icon">🎼</span>
+          <h3>{% if locale == 'es' %}Comienza el Análisis{% else %}Start the Analysis{% endif %}</h3>
+          <p>{% if locale == 'es' %}Selecciona una obra maestra del catálogo izquierdo para cargar la partitura y comenzar el desafío.{% else %}Select a masterpiece from the left catalog to load the stave and begin the challenge.{% endif %}</p>
+        </div>
+      </div>
+      
+      <div class="workstation-card glass-panel hidden" id="analysis-content">
+        <!-- Workstation Header -->
+        <div class="workstation-header">
+          <div class="header-left">
+            <span class="badge" id="challenge-concept">Concept</span>
+            <h1 id="challenge-title">Mozart — Symphony No. 40</h1>
+          </div>
+          <div class="header-right">
+            <span class="difficulty-badge" id="challenge-difficulty">Medium</span>
+          </div>
+        </div>
+        
+        <!-- Challenge Objective -->
+        <div class="challenge-objective-card">
+          <p id="challenge-description">Objective text goes here...</p>
+        </div>
+        
+        <!-- Staff & Music Area -->
+        <div class="staff-section">
+          <div class="staff-controls">
+            <button class="btn btn-secondary btn-sm" id="btn-play-analysis">
+              <span class="icon">▶</span> {% if locale == 'es' %}Escuchar Obra{% else %}Play Piece{% endif %}
+            </button>
+            <button class="btn btn-stop btn-sm hidden" id="btn-stop-analysis">
+              <span class="icon">■</span> {% if locale == 'es' %}Detener{% else %}Stop{% endif %}
+            </button>
+            <span class="control-tip">
+              {% if locale == 'es' %}💡 Haz clic en los silencios para ingresar la nota seleccionada{% else %}💡 Click on rests to place the selected note{% endif %}
+            </span>
+          </div>
+          
+          <!-- Interactive Staff Canvas -->
+          <div class="staff-wrapper">
+            <div id="analysis-staff-area"></div>
+          </div>
+          
+          <!-- Reconstruction Palette -->
+          <div class="palette-section" id="reconstruction-palette">
+            <h4>{% if locale == 'es' %}Paleta de Notas{% else %}Note Palette{% endif %}</h4>
+            <div class="note-badges-group" id="available-note-badges">
+              <!-- Dynamically populated available note buttons (like badges) -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Question Section -->
+        <div class="analysis-question-card">
+          <h3>{% if locale == 'es' %}Pregunta de Análisis{% else %}Analysis Question{% endif %}</h3>
+          <p class="question-text" id="question-text">Question text...</p>
+          
+          <form class="options-group" id="question-form">
+            <!-- Dynamically populated multiple-choice radio options -->
+          </form>
+        </div>
+        
+        <!-- Feedback Messages -->
+        <div class="feedback-area" id="analysis-feedback-container" style="display: none; margin-bottom: 1.5rem;"></div>
+        
+        <!-- Action Buttons -->
+        <div class="analysis-actions">
+          <button class="btn btn-secondary" id="btn-reset-analysis">
+            {% if locale == 'es' %}Reiniciar{% else %}Reset{% endif %}
+          </button>
+          <button class="btn btn-success btn-large" id="btn-submit-analysis">
+            {% if locale == 'es' %}Validar Respuesta{% else %}Validate Answer{% endif %} <span class="icon">➔</span>
+          </button>
+        </div>
+      </div>
+    </main>
+    
+  </div>
+</div>
+
+<!-- Custom Results Modal -->
+<div class="modal-overlay hidden" id="analysis-result-modal">
+  <div class="result-modal glass-panel">
+    <div class="result-icon" id="result-icon">🎉</div>
+    <h2 id="result-title">{% if locale == 'es' %}¡Desafío Completado!{% else %}Challenge Completed!{% endif %}</h2>
+    
+    <div class="stars-container" id="result-stars">
+      <span class="modal-star active">★</span>
+      <span class="modal-star active">★</span>
+      <span class="modal-star">★</span>
+    </div>
+    
+    <p id="result-feedback">Feedback message...</p>
+    
+    <div class="result-stats">
+      <div class="stat-box">
+        <span class="stat-label">XP</span>
+        <span class="stat-value" id="result-xp">+75</span>
+      </div>
+    </div>
+    
+    <button class="btn btn-success btn-large" id="result-btn-close">
+      {% if locale == 'es' %}Entendido{% else %}Got it{% endif %}
+    </button>
+  </div>
+</div>
+
+<script>
+  window.__OPUS_LUDUS__ = {
+    locale: "{{ locale }}",
+    baseUrl: "{{ pathPrefix }}/{{ locale }}/",
+    pathPrefix: "{{ pathPrefix }}",
+    page: "analysis"
+  };
+</script>
+{% gameBundle %}

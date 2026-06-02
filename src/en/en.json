@@ -5,6 +5,7 @@
   "nav": {
     "home": "Home",
     "modules": "Modules",
+    "analysis": "Analysis",
     "play": "Play",
     "about": "About"
   },
