@@ -72,7 +72,10 @@ const VALIDATION_TRANSLATIONS = {
   "Antecedent ends on V (question), consequent ends on I (answer).": "El antecedente debe concluir en semicadencia (V) y el consecuente en cadencia perfecta (I).",
   "Clear cadences mark the end of each phrase.": "Marca los finales de cada frase mediante cadencias armónicas claras.",
   "Incorporate imitative counterpoint between voices.": "Incopora contrapunto con imitación o fugado entre las voces.",
-  "Bass line with figures (or chord symbols) for continuo realization.": "Escribe un bajo cifrado barroco para la realización del bajo continuo."
+  "Bass line with figures (or chord symbols) for continuo realization.": "Escribe un bajo cifrado barroco para la realización del bajo continuo.",
+  "Use dotted notes (dotted quarter or dotted half) to fill compound beats.": "Usa figuras con puntillo (negra o blanca con puntillo) para completar los pulsos compuestos.",
+  "The notes must form a complete Dorian mode scale (ascending).": "Las notas deben formar una escala completa en modo Dórico de forma ascendente.",
+  "The notes must form a complete Mixolydian mode scale (ascending).": "Las notas deben formar una escala completa en modo Mixolidio de forma ascendente."
 };
 
 function translateRule(desc, locale) {

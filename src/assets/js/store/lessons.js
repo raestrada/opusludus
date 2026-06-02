@@ -201,5 +201,114 @@ export const LESSONS = {
         }
       ]
     }
+  },
+  "l1-m07": {
+    es: {
+      intro: "Los **compases compuestos** agrupan los pulsos en subdivisiones de tres corcheas. El más común es el **6/8**.",
+      details: [
+        "**Unidad de pulso**: En 6/8, cada compás tiene 2 pulsos principales, representados por una **negra con puntillo** (4d).",
+        "**Subdivisión ternaria**: Cada pulso de negra con puntillo se divide en **tres corcheas** (8-8-8). Es un compás con sensación de balanceo o danza.",
+        "**Negra con puntillo (4d)**: Dura 1.5 tiempos en métrica estándar (3 corcheas), ocupando exactamente un pulso completo en 6/8.",
+        "**Blanca con puntillo (2d)**: Dura 3 tiempos en métrica estándar (6 corcheas), llenando un compás completo de 6/8.",
+        "En este desafío, debes componer utilizando figuras rítmicas con puntillo para rellenar los pulsos de la métrica de 6/8."
+      ],
+      exampleTitle: "Ejemplo: Ritmo Ternario en 6/8",
+      exampleDesc: "Escucha el pulso binario subdividido en grupos de tres corcheas (1-2-3, 4-5-6), rematado por negras con puntillo y una blanca con puntillo final."
+    },
+    en: {
+      intro: "**Compound time signatures** group beats into ternary subdivisions (groups of three eighth notes). The most common is **6/8**.",
+      details: [
+        "**Beat Unit**: In 6/8 time, there are 2 main beats per measure, each represented by a **dotted quarter note** (4d).",
+        "**Ternary Subdivision**: Each dotted quarter beat divides into **three eighth notes** (8-8-8). This creates a waltz-like or swaying dance feel.",
+        "**Dotted Quarter Note (4d)**: Lasts 1.5 beats in simple time (3 eighth notes), filling exactly one compound beat.",
+        "**Dotted Half Note (2d)**: Lasts 3 beats in simple time (6 eighth notes), filling an entire 6/8 measure.",
+        "In this challenge, use dotted values to complete the compound pulses in 6/8 meter."
+      ],
+      exampleTitle: "Example: Ternary Rhythm in 6/8",
+      exampleDesc: "Listen to the binary beat subdivided into groups of three eighth notes (1-2-3, 4-5-6), finishing with dotted quarter notes and a dotted half note."
+    },
+    exampleComposition: {
+      clef: "treble",
+      timeSignature: [6, 8],
+      keySignature: "C",
+      measures: [
+        {
+          voices: [[
+            { pitch: "C4", duration: "8" },
+            { pitch: "D4", duration: "8" },
+            { pitch: "E4", duration: "8" },
+            { pitch: "F4", duration: "8" },
+            { pitch: "G4", duration: "8" },
+            { pitch: "A4", duration: "8" }
+          ]]
+        },
+        {
+          voices: [[
+            { pitch: "G4", duration: "4d" },
+            { pitch: "F4", duration: "8" },
+            { pitch: "E4", duration: "8" },
+            { pitch: "D4", duration: "8" }
+          ]]
+        },
+        {
+          voices: [[
+            { pitch: "E4", duration: "4d" },
+            { pitch: "D4", duration: "4d" }
+          ]]
+        },
+        {
+          voices: [[
+            { pitch: "C4", duration: "2d" }
+          ]]
+        }
+      ]
+    }
+  },
+  "l1-m08": {
+    es: {
+      intro: "Los **modos eclesiásticos** son las escalas antecesoras del sistema mayor/menor, muy usadas en la música medieval, renacentista y moderna.",
+      details: [
+        "**Modo Dórico**: Es una escala de carácter menor pero con una **sexta mayor** característica que le da un brillo misterioso y medieval.",
+        "**Construcción**: Se construye partiendo desde el segundo grado de una escala mayor. Re Dórico (D Dorian) usa las notas naturales de Do mayor comenzando en Re: D-E-F-G-A-B-C-D.",
+        "**Intervalos clave**: Nota la distancia de 6ta mayor desde Re (B natural) en lugar del Si bemol tradicional de la escala de Re menor natural.",
+        "Compón una melodía ascendente en Re Dórico para familiarizarte con su sonido medieval único."
+      ],
+      exampleTitle: "Ejemplo: Escala de Re Dórico Ascendente",
+      exampleDesc: "Escucha los intervalos del modo Dórico. Nota el sonido de la 6ta mayor brillante (Si natural, B4) en la escala menor."
+    },
+    en: {
+      intro: "**Church modes** are historical scales preceding our major/minor keys, widely used in Medieval, Renaissance, and modern compositions.",
+      details: [
+        "**Dorian Mode**: A minor-type scale characterized by a **major sixth** degree, giving it a bright, medieval, and mysterious character.",
+        "**Construction**: It is built on the 2nd degree of a major scale. D Dorian uses the natural keys of C major starting on D: D-E-F-G-A-B-C-D.",
+        "**Key Intervals**: Note the major 6th distance from D (B natural) instead of the B flat found in the standard D natural minor scale.",
+        "Compose an ascending melody in D Dorian to experience its unique historical flavor."
+      ],
+      exampleTitle: "Example: Ascending D Dorian Scale",
+      exampleDesc: "Listen to the intervals of the Dorian mode. Notice the bright major 6th (B natural, B4) within the minor-third scale."
+    },
+    exampleComposition: {
+      clef: "treble",
+      timeSignature: [4, 4],
+      keySignature: "C",
+      measures: [
+        {
+          voices: [[
+            { pitch: "D4", duration: "4" },
+            { pitch: "E4", duration: "4" },
+            { pitch: "F4", duration: "4" },
+            { pitch: "G4", duration: "4" }
+          ]]
+        },
+        {
+          voices: [[
+            { pitch: "A4", duration: "4" },
+            { pitch: "B4", duration: "4" },
+            { pitch: "C5", duration: "4" },
+            { pitch: "D5", duration: "4" }
+          ]]
+        }
+      ]
+    }
   }
 };

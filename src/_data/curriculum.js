@@ -153,9 +153,57 @@ const curriculum = [
     },
   },
   {
-    id: "l1-m04",
+    id: "l1-m07",
     level: 1,
     order: 4,
+    name: {
+      en: "Compound Time Signatures",
+      es: "Compases compuestos",
+    },
+    slug: "compound-time-signatures",
+    description: {
+      en: "Master compound meters like 6/8. Understand the dotted quarter note as the main beat and compose rhythms using ternary subdivisions.",
+      es: "Domina los compases compuestos como 6/8. Entiende la negra con puntillo como pulso principal y compón ritmos con subdivisiones ternarias.",
+    },
+    challenge: {
+      staff: "treble",
+      clef: "treble",
+      timeSignature: [6, 8],
+      measures: 4,
+      availableNotes: ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"],
+      availableDurations: ["2d", "4d", "4", "8"],
+      validations: [
+        {
+          type: "measureFillsTimeSignature",
+          description: "Every measure fills the time signature correctly.",
+        },
+        {
+          type: "usesMultipleDurations",
+          minTypes: 2,
+          description: "Use at least two different rhythmic values.",
+        },
+        {
+          type: "hasDottedNotes",
+          description: "Use dotted notes (dotted quarter or dotted half) to fill compound beats.",
+        },
+      ],
+    },
+    xpBase: 75,
+    tips: {
+      en: [
+        "In 6/8: there are 2 main beats per measure, each divided into 3 eighth notes.",
+        "A dotted quarter note (4d) = 1 beat, a dotted half note (2d) = 2 beats (covers the whole measure).",
+      ],
+      es: [
+        "En 6/8: hay 2 pulsos principales por compás, cada uno dividido en 3 corcheas.",
+        "Una negra con puntillo (4d) = 1 pulso, una blanca con puntillo (2d) = 2 pulsos (cubre todo el compás).",
+      ],
+    },
+  },
+  {
+    id: "l1-m04",
+    level: 1,
+    order: 5,
     name: {
       en: "Intervals — Unison to Octave",
       es: "Intervalos — Unísono a octava",
@@ -209,7 +257,7 @@ const curriculum = [
   {
     id: "l1-m05",
     level: 1,
-    order: 5,
+    order: 6,
     name: {
       en: "Major Scales",
       es: "Escalas mayores",
@@ -265,7 +313,7 @@ const curriculum = [
   {
     id: "l1-m06",
     level: 1,
-    order: 6,
+    order: 7,
     name: {
       en: "Minor Scales",
       es: "Escalas menores",
@@ -317,6 +365,50 @@ const curriculum = [
       ],
     },
   },
+  {
+    id: "l1-m08",
+    level: 1,
+    order: 8,
+    name: {
+      en: "Church Modes",
+      es: "Modos eclesiásticos",
+    },
+    slug: "church-modes",
+    description: {
+      en: "Explore historical modal scales. Build and compose melodies in the Dorian mode, highlighting its characteristic major sixth.",
+      es: "Explora las escalas modales históricas. Construye y compón melodías en el modo Dórico, resaltando su sexta mayor característica.",
+    },
+    challenge: {
+      staff: "treble",
+      clef: "treble",
+      timeSignature: [4, 4],
+      measures: 8,
+      availableNotes: ["D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5"],
+      availableDurations: ["1", "2", "4", "8"],
+      validations: [
+        {
+          type: "isScale",
+          scaleType: "dorian",
+          description: "The notes must form a complete Dorian mode scale (ascending).",
+        },
+        {
+          type: "correctAccidentals",
+          description: "Use accidentals correctly (sharps or flats for the key).",
+        },
+      ],
+    },
+    xpBase: 75,
+    tips: {
+      en: [
+        "Dorian mode is built on the 2nd degree of the major scale.",
+        "D Dorian uses the same notes as C major but starts and ends on D (D-E-F-G-A-B-C-D). Notice the major 6th (B natural) and minor 3rd (F).",
+      ],
+      es: [
+        "El modo dórico se construye sobre el 2do grado de la escala mayor.",
+        "Re Dórico usa las mismas notas que Do mayor pero comienza y termina en Re (Re-Mi-Fa-Sol-La-Si-Do-Re). Observa la 6ta mayor (Si natural) y la 3ra menor (Fa).",
+      ],
+    },
+  },
 
   // ═══════════════════════════════════════════════════
   // LEVEL 2 — BASIC HARMONY / ARMONÍA BÁSICA
@@ -324,7 +416,7 @@ const curriculum = [
   {
     id: "l2-m01",
     level: 2,
-    order: 7,
+    order: 9,
     name: {
       en: "Major and Minor Triads",
       es: "Triadas mayores y menores",
@@ -382,7 +474,7 @@ const curriculum = [
   {
     id: "l2-m02",
     level: 2,
-    order: 8,
+    order: 10,
     name: {
       en: "Triad Inversions",
       es: "Inversiones de triadas",
@@ -455,7 +547,7 @@ const curriculum = [
   {
     id: "l2-m03",
     level: 2,
-    order: 9,
+    order: 11,
     name: {
       en: "I-IV-V-I Progression",
       es: "Progresión I-IV-V-I",
@@ -514,7 +606,7 @@ const curriculum = [
   {
     id: "l2-m04",
     level: 2,
-    order: 10,
+    order: 12,
     name: {
       en: "Cadences",
       es: "Cadencias",
@@ -583,7 +675,7 @@ const curriculum = [
   {
     id: "l2-m05",
     level: 2,
-    order: 11,
+    order: 13,
     name: {
       en: "Circle of Fifths",
       es: "Círculo de quintas",
@@ -643,7 +735,7 @@ const curriculum = [
   {
     id: "l2-m06",
     level: 2,
-    order: 12,
+    order: 14,
     name: {
       en: "Dominant Seventh Chord",
       es: "Acorde de séptima de dominante",
@@ -712,7 +804,7 @@ const curriculum = [
   {
     id: "l3-m01",
     level: 3,
-    order: 13,
+    order: 15,
     name: {
       en: "First Species Counterpoint",
       es: "Contrapunto de primera especie",
@@ -787,7 +879,7 @@ const curriculum = [
   {
     id: "l3-m02",
     level: 3,
-    order: 14,
+    order: 16,
     name: {
       en: "Second Species Counterpoint",
       es: "Contrapunto de segunda especie",
@@ -858,7 +950,7 @@ const curriculum = [
   {
     id: "l3-m03",
     level: 3,
-    order: 15,
+    order: 17,
     name: {
       en: "Third Species Counterpoint",
       es: "Contrapunto de tercera especie",
@@ -926,7 +1018,7 @@ const curriculum = [
   {
     id: "l3-m04",
     level: 3,
-    order: 16,
+    order: 18,
     name: {
       en: "Fourth Species Counterpoint",
       es: "Contrapunto de cuarta especie",
@@ -997,7 +1089,7 @@ const curriculum = [
   {
     id: "l4-m01",
     level: 4,
-    order: 17,
+    order: 19,
     name: {
       en: "Binary Form",
       es: "Forma binaria",
@@ -1070,7 +1162,7 @@ const curriculum = [
   {
     id: "l4-m02",
     level: 4,
-    order: 18,
+    order: 20,
     name: {
       en: "Ternary Form (ABA)",
       es: "Forma ternaria (ABA)",
@@ -1139,7 +1231,7 @@ const curriculum = [
   {
     id: "l4-m03",
     level: 4,
-    order: 19,
+    order: 21,
     name: {
       en: "Rondo Form",
       es: "Rondó",
@@ -1208,7 +1300,7 @@ const curriculum = [
   {
     id: "l4-m04",
     level: 4,
-    order: 20,
+    order: 22,
     name: {
       en: "Theme and Variations",
       es: "Tema con variaciones",
@@ -1283,7 +1375,7 @@ const curriculum = [
   {
     id: "l4-m05",
     level: 4,
-    order: 21,
+    order: 23,
     name: {
       en: "Sonata Form — Exposition",
       es: "Forma sonata — Exposición",
@@ -1367,7 +1459,7 @@ const curriculum = [
   {
     id: "l5-m01",
     level: 5,
-    order: 22,
+    order: 24,
     name: {
       en: "Modulation to Closely Related Keys",
       es: "Modulación a tonalidades vecinas",
@@ -1438,7 +1530,7 @@ const curriculum = [
   {
     id: "l5-m02",
     level: 5,
-    order: 23,
+    order: 25,
     name: {
       en: "Altered Chords and Augmented Sixths",
       es: "Acordes alterados y de sexta aumentada",
@@ -1515,7 +1607,7 @@ const curriculum = [
   {
     id: "l5-m03",
     level: 5,
-    order: 24,
+    order: 26,
     name: {
       en: "Ninth, Eleventh, and Thirteenth Chords",
       es: "Acordes de novena, oncena y trecena",
@@ -1585,7 +1677,7 @@ const curriculum = [
   {
     id: "l5-m04",
     level: 5,
-    order: 25,
+    order: 27,
     name: {
       en: "Chromaticism",
       es: "Cromatismo",
@@ -1662,7 +1754,7 @@ const curriculum = [
   {
     id: "l5-m05",
     level: 5,
-    order: 26,
+    order: 28,
     name: {
       en: "Modal Interchange",
       es: "Intercambio modal",
@@ -1737,7 +1829,7 @@ const curriculum = [
   {
     id: "l6-m01",
     level: 6,
-    order: 27,
+    order: 29,
     name: {
       en: "Instrumental Ranges",
       es: "Rangos instrumentales",
@@ -1812,7 +1904,7 @@ const curriculum = [
   {
     id: "l6-m02",
     level: 6,
-    order: 28,
+    order: 30,
     name: {
       en: "Writing for Strings",
       es: "Escritura para cuerdas",
@@ -1887,7 +1979,7 @@ const curriculum = [
   {
     id: "l6-m03",
     level: 6,
-    order: 29,
+    order: 31,
     name: {
       en: "Writing for Winds",
       es: "Escritura para vientos",
@@ -1960,7 +2052,7 @@ const curriculum = [
   {
     id: "l6-m04",
     level: 6,
-    order: 30,
+    order: 32,
     name: {
       en: "Baroque Style",
       es: "Estilo barroco",
@@ -2033,7 +2125,7 @@ const curriculum = [
   {
     id: "l6-m05",
     level: 6,
-    order: 31,
+    order: 33,
     name: {
       en: "Classical Style",
       es: "Estilo clásico",
@@ -2107,7 +2199,7 @@ const curriculum = [
   {
     id: "l6-m06",
     level: 6,
-    order: 32,
+    order: 34,
     name: {
       en: "Romantic Style",
       es: "Estilo romántico",
@@ -2193,7 +2285,7 @@ const curriculum = [
   {
     id: "l6-m07",
     level: 6,
-    order: 33,
+    order: 35,
     name: {
       en: "Impressionist Style",
       es: "Estilo impresionista",
@@ -2268,7 +2360,7 @@ const curriculum = [
   {
     id: "l6-m08",
     level: 6,
-    order: 34,
+    order: 36,
     name: {
       en: "Contemporary Style",
       es: "Estilo contemporáneo",
@@ -2351,7 +2443,7 @@ const curriculum = [
   {
     id: "l7-m01",
     level: 7,
-    order: 35,
+    order: 37,
     name: {
       en: "Polytonality",
       es: "Politonalidad",
@@ -2425,7 +2517,7 @@ const curriculum = [
   {
     id: "l7-m02",
     level: 7,
-    order: 36,
+    order: 38,
     name: {
       en: "Atonality and Twelve-Tone Technique",
       es: "Atonalismo y dodecafonismo",
@@ -2500,7 +2592,7 @@ const curriculum = [
   {
     id: "l7-m03",
     level: 7,
-    order: 37,
+    order: 39,
     name: {
       en: "Serialism",
       es: "Serialismo",
@@ -2568,7 +2660,7 @@ const curriculum = [
   {
     id: "l7-m04",
     level: 7,
-    order: 38,
+    order: 40,
     name: {
       en: "Minimalism",
       es: "Minimalismo",
@@ -2641,7 +2733,7 @@ const curriculum = [
   {
     id: "l7-m05",
     level: 7,
-    order: 39,
+    order: 41,
     name: {
       en: "Final Project — Free Composition",
       es: "Proyecto final — Composición libre",

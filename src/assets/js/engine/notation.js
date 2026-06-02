@@ -182,7 +182,9 @@ export class NotationRenderer {
           });
           staveNote.setAttribute('id', noteId);
           staveNote.setStyle({ fillStyle: noteColor, strokeStyle: noteColor });
-          staveNote.setStemStyle({ fillStyle: noteColor, strokeStyle: noteColor });
+          if (n.duration && n.duration.endsWith("d")) {
+            staveNote.addModifier(new VF.Dot(), 0);
+          }
           if (n.accidental) {
             staveNote.addModifier(new VF.Accidental(n.accidental), 0);
           }
@@ -196,6 +198,9 @@ export class NotationRenderer {
           });
           restNote.setAttribute('id', noteId);
           restNote.setStyle({ fillStyle: restColor, strokeStyle: restColor });
+          if (n.duration && n.duration.endsWith("d")) {
+            restNote.addModifier(new VF.Dot(), 0);
+          }
           notes.push(restNote);
         }
       }
@@ -313,7 +318,9 @@ export class NotationRenderer {
               });
               staveNote.setAttribute('id', noteId);
               staveNote.setStyle({ fillStyle: noteColor, strokeStyle: noteColor });
-              staveNote.setStemStyle({ fillStyle: noteColor, strokeStyle: noteColor });
+              if (n.duration && n.duration.endsWith("d")) {
+                staveNote.addModifier(new VF.Dot(), 0);
+              }
               if (n.accidental) {
                 staveNote.addModifier(new VF.Accidental(n.accidental), 0);
               }
@@ -326,6 +333,9 @@ export class NotationRenderer {
               });
               restNote.setAttribute('id', noteId);
               restNote.setStyle({ fillStyle: restColor, strokeStyle: restColor });
+              if (n.duration && n.duration.endsWith("d")) {
+                restNote.addModifier(new VF.Dot(), 0);
+              }
               notes.push(restNote);
             }
           }

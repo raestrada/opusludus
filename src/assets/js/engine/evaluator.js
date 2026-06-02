@@ -208,6 +208,28 @@ const validators = {
     };
   },
 
+  // Check if at least one dotted note is present
+  hasDottedNotes(composition, rule) {
+    let dottedCount = 0;
+    for (const measure of composition.measures || []) {
+      for (const voice of measure.voices || []) {
+        for (const note of voice) {
+          if (note.duration && note.duration.endsWith("d")) {
+            dottedCount++;
+          }
+        }
+      }
+    }
+    const passed = dottedCount >= 1;
+    return {
+      passed,
+      score: passed ? 1 : 0,
+      feedback: passed
+        ? "Dotted notes are used correctly."
+        : "Please use at least one dotted note (dotted quarter or dotted half).",
+    };
+  },
+
   // Accent strong beats
   strongBeatAccent(composition, rule) {
     const timeSig = composition.timeSignature || [4, 4];
@@ -336,14 +358,40 @@ const validators = {
 
     const passed = correctCount === expectedMIDI.length;
     const score = correctCount / expectedMIDI.length;
-    const scaleNameStr = `${tonicName} ${scaleType === "minor" ? "menor natural" : "mayor"}`;
+
+    const locale = (typeof window !== "undefined" && window.__OPUS_LUDUS__ && window.__OPUS_LUDUS__.locale) || "es";
+    const scaleNamesEs = {
+      major: "mayor",
+      minor: "menor natural",
+      dorian: "dórico",
+      phrygian: "frigio",
+      lydian: "lidio",
+      mixolydian: "mixolidio"
+    };
+    const scaleNamesEn = {
+      major: "major",
+      minor: "natural minor",
+      dorian: "Dorian",
+      phrygian: "Phrygian",
+      lydian: "Lydian",
+      mixolydian: "Mixolydian"
+    };
+    const scaleNameStr = locale === "es"
+      ? `${tonicName} ${(scaleNamesEs[scaleType] || scaleType)}`
+      : `${tonicName} ${(scaleNamesEn[scaleType] || scaleType)}`;
+
+    const feedback = locale === "es"
+      ? (passed
+        ? `¡Excelente! Escribiste la escala de ${scaleNameStr} de forma ascendente perfecta.`
+        : `La escala de ${scaleNameStr} no es correcta. Tienes ${correctCount} de ${expectedMIDI.length} notas en el orden y alteración correctos.`)
+      : (passed
+        ? `Excellent! You wrote the ${scaleNameStr} scale in perfect ascending order.`
+        : `The ${scaleNameStr} scale is incorrect. You have ${correctCount} of ${expectedMIDI.length} notes in the correct order and accidental.`);
 
     return {
       passed,
       score,
-      feedback: passed
-        ? `¡Excelente! Escribiste la escala de ${scaleNameStr} de forma ascendente perfecta.`
-        : `La escala de ${scaleNameStr} no es correcta. Tienes ${correctCount} de ${expectedMIDI.length} notas en el orden y alteración correctos.`,
+      feedback,
     };
   },
 
@@ -575,8 +623,9 @@ const validators = {
     if (leadingTone) {
       // Check if leading tone resolves correctly
       const notes = getAllMidiNotes(composition);
+      const key = composition.keySignature || "C";
       for (let i = 0; i < notes.length - 1; i++) {
-        if (isLeadingTone(notes[i], "C") && !resolvesUpToTonic(notes[i], notes[i + 1], "C")) {
+        if (isLeadingTone(notes[i], key) && !resolvesUpToTonic(notes[i], notes[i + 1], key)) {
           issues.push("Leading tone should resolve up to tonic.");
         }
       }
@@ -660,12 +709,14 @@ const validators = {
   // Tritone resolves
   tritoneResolves(composition, rule) {
     const key = composition.keySignature || rule.key || "C";
-    const scale = getScale(key, "major");
+    const isMinor = key.endsWith("m");
+    const cleanKey = key.replace(/m$/, "");
+    const scale = getScale(cleanKey, "major");
     if (!scale) return { passed: false, score: 0, feedback: "Could not determine scale for key." };
     const leadingTonePC = scale[6] % 12; // sensible (e.g. B = 11)
     const fourthDegreePC = scale[3] % 12; // 7th of V7 / 4th degree of scale (e.g. F = 5)
     const tonicPC = scale[0] % 12; // (e.g. C = 0)
-    const thirdDegreePC = scale[2] % 12; // (e.g. E = 4)
+    const thirdDegreePC = isMinor ? (scale[2] - 1 + 12) % 12 : scale[2] % 12;
 
     let checkedCount = 0;
     let resolvedCount = 0;

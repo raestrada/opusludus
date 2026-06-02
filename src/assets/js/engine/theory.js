@@ -126,6 +126,10 @@ const SCALE_PATTERNS = {
   naturalMinor: [0, 2, 3, 5, 7, 8, 10],
   harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
   melodicMinor: [0, 2, 3, 5, 7, 9, 11],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  lydian: [0, 2, 4, 6, 7, 9, 11],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10],
   wholeTone: [0, 2, 4, 6, 8, 10],
   chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 };
@@ -168,7 +172,8 @@ const RELATIVE_MINOR = {
 };
 
 export function getScale(tonic, type = "major") {
-  const root = nameToMidi(tonic + "0"); // Use octave 0, return relative pitches
+  const cleanTonic = tonic.replace(/m$/, "");
+  const root = nameToMidi(cleanTonic + "0"); // Use octave 0, return relative pitches
   if (root === null) return null;
   const pattern = SCALE_PATTERNS[type];
   if (!pattern) return null;
@@ -176,7 +181,8 @@ export function getScale(tonic, type = "major") {
 }
 
 export function getScaleInOctave(tonic, type = "major", octave = 4) {
-  const root = nameToMidi(tonic + octave);
+  const cleanTonic = tonic.replace(/m$/, "");
+  const root = nameToMidi(cleanTonic + octave);
   if (root === null) return null;
   const pattern = SCALE_PATTERNS[type];
   if (!pattern) return null;
