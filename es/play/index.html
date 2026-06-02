@@ -122,6 +122,17 @@
           <h2 id="hud-module-title" class="hud-title">Cargando módulo...</h2>
         </div>
         <div class="hud-right">
+          <div class="hud-actions-group">
+            <button class="btn btn-secondary btn-sm" id="hud-btn-objectives" title="Ver Requisitos">
+              <span class="icon">🎯</span> Requisitos
+            </button>
+            <button class="btn btn-secondary btn-sm" id="hud-btn-tips" title="Ver Teoría">
+              <span class="icon">💡</span> Teoría
+            </button>
+            <button class="btn btn-secondary btn-sm" id="hud-btn-aids" title="Ayudas Visuales">
+              <span class="icon">🔍</span> Ayudas
+            </button>
+          </div>
           <span class="hud-stat xp"><span class="icon">🎵</span> <span id="hud-xp-value">0</span> XP</span>
           <span class="hud-stat streak" id="hud-streak-container" style="display:none;"><span class="icon">🔥</span> <span id="hud-streak-value">0</span></span>
         </div>
@@ -217,6 +228,13 @@
         </div>
 
         <div class="result-score" id="result-score-value">95%</div>
+        
+        <!-- Score Penalty Breakdown -->
+        <div class="score-breakdown-container" id="score-breakdown-area" style="display:none; margin: 0.5rem 0 1rem; font-size: 0.95rem; color: #a0a0b8;">
+          <span id="breakdown-base-score">Base: 100%</span> | 
+          <span id="breakdown-penalty" style="color: #ff5252;">Ayudas: -20%</span>
+        </div>
+
         <div class="result-xp-earned" id="result-xp-value">+50 XP</div>
         
         <div class="result-streak" id="result-streak-container" style="display:none;">
@@ -229,6 +247,86 @@
         </div>
 
         <button class="btn-link" id="result-btn-menu">← Volver al menú</button>
+      </div>
+    </div>
+
+    <!-- Objectives Modal (In-game lookup) -->
+    <div class="result-overlay hidden" id="objectives-modal">
+      <div class="result-content modal-content-custom">
+        <h2>🎯 Requisitos de Evaluación</h2>
+        <ul id="objectives-modal-list" class="challenge-rules-list-large">
+          <!-- Populated by JS -->
+        </ul>
+        <div class="result-actions">
+          <button class="btn btn-success" id="objectives-modal-close">Entendido</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theory & Tips Modal (In-game lookup) -->
+    <div class="result-overlay hidden" id="theory-tips-modal">
+      <div class="result-content modal-content-custom">
+        <h2>💡 Tips Teóricos y Visuales</h2>
+        <div id="theory-tips-modal-content" class="theory-tips-body">
+          <!-- Populated by JS -->
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-success" id="theory-tips-modal-close">Entendido</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual Aids Modal (In-game lookup) -->
+    <div class="result-overlay hidden" id="visual-aids-modal">
+      <div class="result-content modal-content-custom">
+        <h2>🔍 Panel de Ayudas Visuales</h2>
+        <p class="modal-intro-text" style="color: #a0a0b8; font-size: 0.95rem; margin-bottom: 1.5rem;">
+          
+            Si te trabas, puedes activar estas ayudas visuales. **Atención**: cada ayuda activada te restará puntos de tu calificación final en este módulo.
+          
+        </p>
+        
+        <div class="visual-aids-list" style="display: flex; flex-direction: column; gap: 1rem; text-align: left; margin-bottom: 1.5rem;">
+          <!-- Piano Aid -->
+          <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div class="aid-info" style="flex: 1;">
+              <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1.05rem;">🎹 Pista 1: Iluminar Piano de Ayuda</h4>
+              <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">Resalta las teclas permitidas del piano con un color verde brillante para encontrarlas fácilmente.</p>
+            </div>
+            <div class="aid-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+              <span class="aid-penalty" style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-10%</span>
+              <button class="btn btn-warn btn-sm" id="btn-toggle-aid-piano" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">Activar</button>
+            </div>
+          </div>
+
+          <!-- Highlight Errors Aid -->
+          <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div class="aid-info" style="flex: 1;">
+              <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1.05rem;">❌ Pista 2: Resaltar Errores en Rojo</h4>
+              <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">Dibuja de color rojo brillante directamente en la partitura cualquier nota que no cumpla con los requisitos del desafío.</p>
+            </div>
+            <div class="aid-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+              <span class="aid-penalty" style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-20%</span>
+              <button class="btn btn-warn btn-sm" id="btn-toggle-aid-errors" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">Activar</button>
+            </div>
+          </div>
+
+          <!-- Note Suggestion Aid -->
+          <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div class="aid-info" style="flex: 1;">
+              <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1.05rem;">💡 Pista 3: Sugerir Siguiente Nota</h4>
+              <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">Genera y muestra una sugerencia melódica consonante basada en la última nota escrita.</p>
+            </div>
+            <div class="aid-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+              <span class="aid-penalty" style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-15%</span>
+              <button class="btn btn-warn btn-sm" id="btn-toggle-aid-suggest" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">Activar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-success" id="visual-aids-modal-close">Entendido</button>
+        </div>
       </div>
     </div>
 

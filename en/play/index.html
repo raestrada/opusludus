@@ -122,6 +122,17 @@
           <h2 id="hud-module-title" class="hud-title">Cargando módulo...</h2>
         </div>
         <div class="hud-right">
+          <div class="hud-actions-group">
+            <button class="btn btn-secondary btn-sm" id="hud-btn-objectives" title="View Requirements">
+              <span class="icon">🎯</span> Requirements
+            </button>
+            <button class="btn btn-secondary btn-sm" id="hud-btn-tips" title="View Theory">
+              <span class="icon">💡</span> Theory
+            </button>
+            <button class="btn btn-secondary btn-sm" id="hud-btn-aids" title="Visual Aids">
+              <span class="icon">🔍</span> Aids
+            </button>
+          </div>
           <span class="hud-stat xp"><span class="icon">🎵</span> <span id="hud-xp-value">0</span> XP</span>
           <span class="hud-stat streak" id="hud-streak-container" style="display:none;"><span class="icon">🔥</span> <span id="hud-streak-value">0</span></span>
         </div>
@@ -217,6 +228,13 @@
         </div>
 
         <div class="result-score" id="result-score-value">95%</div>
+        
+        <!-- Score Penalty Breakdown -->
+        <div class="score-breakdown-container" id="score-breakdown-area" style="display:none; margin: 0.5rem 0 1rem; font-size: 0.95rem; color: #a0a0b8;">
+          <span id="breakdown-base-score">Base: 100%</span> | 
+          <span id="breakdown-penalty" style="color: #ff5252;">Aids: -20%</span>
+        </div>
+
         <div class="result-xp-earned" id="result-xp-value">+50 XP</div>
         
         <div class="result-streak" id="result-streak-container" style="display:none;">
@@ -229,6 +247,86 @@
         </div>
 
         <button class="btn-link" id="result-btn-menu">← Volver al menú</button>
+      </div>
+    </div>
+
+    <!-- Objectives Modal (In-game lookup) -->
+    <div class="result-overlay hidden" id="objectives-modal">
+      <div class="result-content modal-content-custom">
+        <h2>🎯 Evaluation Requirements</h2>
+        <ul id="objectives-modal-list" class="challenge-rules-list-large">
+          <!-- Populated by JS -->
+        </ul>
+        <div class="result-actions">
+          <button class="btn btn-success" id="objectives-modal-close">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theory & Tips Modal (In-game lookup) -->
+    <div class="result-overlay hidden" id="theory-tips-modal">
+      <div class="result-content modal-content-custom">
+        <h2>💡 Theory & Visual Tips</h2>
+        <div id="theory-tips-modal-content" class="theory-tips-body">
+          <!-- Populated by JS -->
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-success" id="theory-tips-modal-close">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual Aids Modal (In-game lookup) -->
+    <div class="result-overlay hidden" id="visual-aids-modal">
+      <div class="result-content modal-content-custom">
+        <h2>🔍 Visual Aids Panel</h2>
+        <p class="modal-intro-text" style="color: #a0a0b8; font-size: 0.95rem; margin-bottom: 1.5rem;">
+          
+            If you get stuck, you can activate these visual aids. **Note**: each activated aid will deduct points from your final score in this module.
+          
+        </p>
+        
+        <div class="visual-aids-list" style="display: flex; flex-direction: column; gap: 1rem; text-align: left; margin-bottom: 1.5rem;">
+          <!-- Piano Aid -->
+          <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div class="aid-info" style="flex: 1;">
+              <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1.05rem;">🎹 Aid 1: Highlight Helper Piano</h4>
+              <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">Highlight allowed piano keys with a bright green color to find them easily.</p>
+            </div>
+            <div class="aid-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+              <span class="aid-penalty" style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-10%</span>
+              <button class="btn btn-warn btn-sm" id="btn-toggle-aid-piano" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">Activate</button>
+            </div>
+          </div>
+
+          <!-- Highlight Errors Aid -->
+          <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div class="aid-info" style="flex: 1;">
+              <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1.05rem;">❌ Aid 2: Highlight Errors in Red</h4>
+              <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">Color in bright red directly on the staff any notes that violate the challenge requirements.</p>
+            </div>
+            <div class="aid-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+              <span class="aid-penalty" style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-20%</span>
+              <button class="btn btn-warn btn-sm" id="btn-toggle-aid-errors" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">Activate</button>
+            </div>
+          </div>
+
+          <!-- Note Suggestion Aid -->
+          <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div class="aid-info" style="flex: 1;">
+              <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1.05rem;">💡 Aid 3: Suggest Next Note</h4>
+              <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">Generate and show a consonant melodic recommendation based on the last written note.</p>
+            </div>
+            <div class="aid-action" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+              <span class="aid-penalty" style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-15%</span>
+              <button class="btn btn-warn btn-sm" id="btn-toggle-aid-suggest" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">Activate</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-success" id="visual-aids-modal-close">Got it</button>
+        </div>
       </div>
     </div>
 
