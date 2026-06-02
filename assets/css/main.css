@@ -2695,5 +2695,25 @@ body.play-page-active {
   }
 }
 
+/* Hover effects for interactive stave notes and rests */
+.vf-stavenote {
+  cursor: pointer;
+}
+
+/* Transition path and use fills smoothly */
+.vf-stavenote use,
+.vf-stavenote path {
+  transition: fill 0.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.2s ease;
+}
+
+/* Glow highlight on hover (excluding currently selected notes to preserve selected state color) */
+.vf-stavenote:not(.selected-analysis-note):not(.selected-dictation-note):hover use,
+.vf-stavenote:not(.selected-analysis-note):not(.selected-dictation-note):hover path {
+  fill: #b89fff !important;
+  stroke: #b89fff !important;
+  filter: drop-shadow(0 0 8px rgba(184, 159, 255, 0.8));
+}
+
+
 
 
