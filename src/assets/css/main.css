@@ -1255,7 +1255,7 @@ img {
 
 /* Progress Dashboard & Modern UI Upgrades */
 .progress-dashboard {
-  background: linear-gradient(135deg, rgba(10, 10, 26, 0.85), rgba(26, 26, 56, 0.9)), url('/assets/images/dashboard_header_bg.png') !important;
+  background: linear-gradient(135deg, rgba(10, 10, 26, 0.85), rgba(26, 26, 56, 0.9)), url('../images/dashboard_header_bg.png') !important;
   background-size: cover !important;
   background-position: center !important;
   backdrop-filter: blur(12px);

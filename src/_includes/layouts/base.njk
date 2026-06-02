@@ -8,22 +8,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/opusludus/assets/css/main.css">
   {% block head %}{% endblock %}
 </head>
 <body>
   <div class="site-wrapper">
     <header class="site-header">
-      <a href="/{{ locale }}/" class="site-logo">
+      <a href="/opusludus/{{ locale }}/" class="site-logo">
         <span class="icon">🎼</span>
         Opus Ludus
       </a>
       <nav class="site-nav">
-        <a href="/{{ locale }}/" {% if slug == '' %}class="active"{% endif %}>{{ nav.home }}</a>
-        <a href="/{{ locale }}/modules/" {% if slug == 'modules/' %}class="active"{% endif %}>{{ nav.modules }}</a>
+        <a href="/opusludus/{{ locale }}/" {% if slug == '' %}class="active"{% endif %}>{{ nav.home }}</a>
+        <a href="/opusludus/{{ locale }}/modules/" {% if slug == 'modules/' %}class="active"{% endif %}>{{ nav.modules }}</a>
         <span class="lang-switcher">
           {% for loc in site.locales %}
-          <a href="/{{ loc }}/{{ slug }}" {% if loc == locale %}class="active"{% endif %}>{{ loc }}</a>
+          <a href="/opusludus/{{ loc }}/{{ slug }}" {% if loc == locale %}class="active"{% endif %}>{{ loc }}</a>
           {% endfor %}
         </span>
       </nav>
@@ -47,12 +47,12 @@
         <div class="footer-links-group">
           {% if locale == 'es' %}
           <h4>Enlaces Rápidos</h4>
-          <a href="/es/">Inicio</a>
-          <a href="/es/modules/">Módulos del Currículo</a>
+          <a href="/opusludus/es/">Inicio</a>
+          <a href="/opusludus/es/modules/">Módulos del Currículo</a>
           {% else %}
           <h4>Quick Links</h4>
-          <a href="/en/">Home</a>
-          <a href="/en/modules/">Curriculum Modules</a>
+          <a href="/opusludus/en/">Home</a>
+          <a href="/opusludus/en/modules/">Curriculum Modules</a>
           {% endif %}
         </div>
         

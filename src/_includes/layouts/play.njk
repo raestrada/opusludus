@@ -88,7 +88,7 @@ title: Opus Ludus
       <!-- Game HUD -->
       <div class="game-hud">
         <div class="hud-left">
-          <a href="/{{ locale }}/modules/" class="hud-back-btn">← {{ play.back | default("Volver a Módulos") }}</a>
+          <a href="/opusludus/{{ locale }}/modules/" class="hud-back-btn">← {{ play.back | default("Volver a Módulos") }}</a>
           <h2 id="hud-module-title" class="hud-title">Cargando módulo...</h2>
         </div>
         <div class="hud-right">
@@ -308,7 +308,7 @@ title: Opus Ludus
 <script>
   window.__OPUS_LUDUS__ = {
     locale: "{{ locale }}",
-    baseUrl: "/{{ locale }}/",
+    baseUrl: "/opusludus/{{ locale }}/",
     curriculum: {{ curriculum.modules | dump | safe }}
   };
 </script>

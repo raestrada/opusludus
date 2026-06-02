@@ -42,7 +42,7 @@ module.exports = function (eleventyConfig) {
 
   // Shortcode for the game bundle script tag
   eleventyConfig.addShortcode("gameBundle", function () {
-    return '<script src="/assets/js/bundle.js"></script>';
+    return '<script src="/opusludus/assets/js/bundle.js"></script>';
   });
 
   return {
@@ -55,5 +55,6 @@ module.exports = function (eleventyConfig) {
     templateFormats: ["njk", "md", "html"],
     htmlTemplateEngine: "njk",
     markdownTemplateEngine: "njk",
+    pathPrefix: "/opusludus/",
   };
 };
