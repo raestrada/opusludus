@@ -1,0 +1,220 @@
+---
+layout: layouts/base.njk
+title: Opus Ludus — Melodic Dictations
+---
+
+<div class="dictations-page" style="--dictations-bg-url: url('{{ pathPrefix }}/assets/images/dictations_bg.png');">
+  <div class="dictations-container">
+    
+    <!-- Left Sidebar: Classical Dictations Catalog -->
+    <aside class="dictations-sidebar">
+      <div class="sidebar-header">
+        <h2>{% if locale == 'es' %}Dictados Melódicos{% else %}Melodic Dictations{% endif %}</h2>
+        <p>{% if locale == 'es' %}Escucha y reconstruye melodías clásicas por oído{% else %}Listen & reconstruct classical melodies by ear{% endif %}</p>
+      </div>
+      
+      <div class="masterpiece-list" id="dictations-list">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </aside>
+    
+    <!-- Right Panel: Workstation -->
+    <main class="dictations-workstation">
+      <div class="workstation-card glass-panel" id="dictations-empty-state">
+        <div class="empty-content">
+          <span class="empty-icon">🎧</span>
+          <h3>{% if locale == 'es' %}Entrenamiento Auditivo{% else %}Ear Training{% endif %}</h3>
+          <p>{% if locale == 'es' %}Selecciona una obra maestra del catálogo izquierdo para cargar la partitura y comenzar el dictado.{% else %}Select a masterpiece from the left catalog to load the stave and begin the dictation.{% endif %}</p>
+        </div>
+      </div>
+      
+      <div class="workstation-card glass-panel hidden" id="dictations-content">
+        <!-- Workstation Header -->
+        <div class="workstation-header">
+          <div class="header-left">
+            <span class="badge" id="dictation-concept">Concept</span>
+            <h1 id="dictation-title">Bach — Minuet in G</h1>
+          </div>
+          <div class="header-right">
+            <span class="difficulty-badge" id="dictation-difficulty">Easy</span>
+          </div>
+        </div>
+        
+        <!-- Challenge Objective -->
+        <div class="challenge-objective-card">
+          <p id="dictation-description">Objective text goes here...</p>
+        </div>
+        
+        <!-- Staff & Music Area -->
+        <div class="staff-section">
+          <div class="staff-controls">
+            <button class="btn btn-secondary btn-sm" id="btn-play-dictation">
+              <span class="icon">▶</span> {% if locale == 'es' %}Escuchar Dictado{% else %}Play Dictation{% endif %}
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-play-student">
+              <span class="icon">🔊</span> {% if locale == 'es' %}Mi Versión{% else %}My Version{% endif %}
+            </button>
+            <button class="btn btn-stop btn-sm hidden" id="btn-stop-dictation">
+              <span class="icon">■</span> {% if locale == 'es' %}Detener{% else %}Stop{% endif %}
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-theory-dictation">
+              <span class="icon">💡</span> {% if locale == 'es' %}Teoría{% else %}Theory{% endif %}
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-aids-dictation">
+              <span class="icon">🔍</span> {% if locale == 'es' %}Ayudas{% else %}Aids{% endif %}
+            </button>
+            <span class="control-tip">
+              {% if locale == 'es' %}💡 Escucha el dictado, haz clic en las notas mudas y cámbialas usando la paleta.{% else %}💡 Listen to the dictation, click on the silent notes, and change them using the palette.{% endif %}
+            </span>
+          </div>
+          
+          <!-- Interactive Staff Canvas -->
+          <div class="staff-wrapper">
+            <div id="dictations-staff-area"></div>
+          </div>
+          
+          <!-- Reconstruction Palette -->
+          <div class="palette-section" id="dictations-palette">
+            <h4>{% if locale == 'es' %}Paleta de Notas Disponibles{% else %}Available Note Palette{% endif %}</h4>
+            <div class="note-badges-group" id="dictations-available-note-badges">
+              <!-- Dynamically populated available note buttons (like badges) -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Question Section -->
+        <div class="dictations-question-card">
+          <h3>{% if locale == 'es' %}Pregunta de Entrenamiento Auditivo{% else %}Ear Training Question{% endif %}</h3>
+          <p class="question-text" id="dictations-question-text">Question text...</p>
+          
+          <form class="options-group" id="dictations-question-form">
+            <!-- Dynamically populated multiple-choice radio options -->
+          </form>
+        </div>
+        
+        <!-- Feedback Messages -->
+        <div class="feedback-area" id="dictations-feedback-container" style="display: none; margin-bottom: 1.5rem;"></div>
+        
+        <!-- Action Buttons -->
+        <div class="dictations-actions">
+          <button class="btn btn-secondary" id="btn-reset-dictation">
+            {% if locale == 'es' %}Reiniciar{% else %}Reset{% endif %}
+          </button>
+          <button class="btn btn-success btn-large" id="btn-submit-dictation">
+            {% if locale == 'es' %}Validar Respuesta{% else %}Validate Answer{% endif %} <span class="icon">➔</span>
+          </button>
+        </div>
+      </div>
+    </main>
+    
+  </div>
+</div>
+
+<!-- Custom Results Modal -->
+<div class="result-overlay hidden" id="dictations-result-modal">
+  <div class="result-modal glass-panel">
+    <div class="result-icon" id="dictations-result-icon">🎉</div>
+    <h2 id="dictations-result-title">{% if locale == 'es' %}¡Desafío Completado!{% else %}Challenge Completed!{% endif %}</h2>
+    
+    <div class="stars-container" id="dictations-result-stars">
+      <span class="modal-star active">★</span>
+      <span class="modal-star active">★</span>
+      <span class="modal-star">★</span>
+    </div>
+    
+    <p id="dictations-result-feedback">Feedback message...</p>
+    
+    <div class="result-stats">
+      <div class="stat-box">
+        <span class="stat-label">XP</span>
+        <span class="stat-value" id="dictations-result-xp">+75</span>
+      </div>
+    </div>
+    
+    <!-- Score Penalty Breakdown -->
+    <div class="score-breakdown-container" id="dictations-score-breakdown-area" style="display:none; margin: 0.5rem 0 1rem; font-size: 0.95rem; color: #a0a0b8; justify-content: center; gap: 0.5rem;">
+      <span id="dictations-breakdown-base-score">Base: 100%</span> | 
+      <span id="dictations-breakdown-penalty" style="color: #ff5252;">{% if locale == 'es' %}Ayudas: -20%{% else %}Aids: -20%{% endif %}</span>
+    </div>
+    
+    <button class="btn btn-success btn-large" id="dictations-result-btn-close">
+      {% if locale == 'es' %}Entendido{% else %}Got it{% endif %}
+    </button>
+  </div>
+</div>
+
+<!-- Theory Modal -->
+<div class="result-overlay hidden" id="dictations-theory-modal">
+  <div class="result-modal glass-panel" style="max-width: 600px; width: 95%;">
+    <h2>💡 {% if locale == 'es' %}Concepto de Entrenamiento Auditivo{% else %}Ear Training Concept{% endif %}</h2>
+    <div id="dictations-theory-modal-content" class="theory-tips-body" style="text-align: left; margin: 1.5rem 0; color: #d0d0e0; font-size: 1.05rem; line-height: 1.5;">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="result-actions" style="margin-top: 0; justify-content: center;">
+      <button class="btn btn-success" id="dictations-theory-modal-close">{% if locale == 'es' %}Entendido{% else %}Got it{% endif %}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Visual Aids Modal -->
+<div class="result-overlay hidden" id="dictations-aids-modal">
+  <div class="result-modal glass-panel" style="max-width: 600px; width: 95%;">
+    <h2>🔍 {% if locale == 'es' %}Panel de Ayudas de Dictado{% else %}Dictation Aids Panel{% endif %}</h2>
+    <p style="color: #a0a0b8; font-size: 0.9rem; margin-bottom: 1.5rem; text-align: center;">
+      {% if locale == 'es' %}Si tienes dificultades para identificar las notas por oído, usa estas ayudas. Cada una reduce tu calificación final.{% else %}If you have difficulty identifying the notes by ear, use these aids. Each reduces your final score.{% endif %}
+    </p>
+    <div class="visual-aids-list" style="display: flex; flex-direction: column; gap: 1rem; text-align: left; margin-bottom: 1.5rem;">
+      
+      <!-- Clue (5% penalty) -->
+      <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+        <div style="flex: 1;">
+          <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1rem;">📖 {% if locale == 'es' %}Pista 1: Descripción Melódica Detallada{% else %}Aid 1: Detailed Melodic Hint{% endif %}</h4>
+          <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">{% if locale == 'es' %}Describe el movimiento de los intervalos de la melodía (si sube, baja o repite).{% else %}Describes the movement of intervals in the melody (stepping up, down, or repeating).{% endif %}</p>
+          <p class="aid-text-reveal hidden" id="dictations-aid-theory-text" style="color: #f0c040; font-size: 0.9rem; margin-top: 0.5rem; font-style: italic;"></p>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+          <span style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-5%</span>
+          <button class="btn btn-warn btn-sm" id="btn-toggle-dictations-aid-theory" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">{% if locale == 'es' %}Activar{% else %}Activate{% endif %}</button>
+        </div>
+      </div>
+
+      <!-- Highlight target staff notes/rests (10% penalty) -->
+      <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+        <div style="flex: 1;">
+          <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1rem;">🎯 {% if locale == 'es' %}Pista 2: Resaltar Nota Muda en Partitura{% else %}Aid 2: Highlight Silent Note on Staff{% endif %}</h4>
+          <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">{% if locale == 'es' %}Resalta la posición de las notas correctas en rojo sobre el pentagrama para ver su altura relativa.{% else %}Highlights the correct pitches in red on the staff to see their relative height.{% endif %}</p>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+          <span style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-10%</span>
+          <button class="btn btn-warn btn-sm" id="btn-toggle-dictations-aid-staff" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">{% if locale == 'es' %}Activar{% else %}Activate{% endif %}</button>
+        </div>
+      </div>
+
+      <!-- Highlight correct note in available badges palette (15% penalty) -->
+      <div class="aid-item" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+        <div style="flex: 1;">
+          <h4 style="margin: 0 0 0.25rem 0; color: #e8e8f0; font-size: 1rem;">🟢 {% if locale == 'es' %}Pista 3: Revelar Nota Correcta en Paleta{% else %}Aid 3: Reveal Correct Note in Palette{% endif %}</h4>
+          <p style="margin: 0; color: #a0a0b8; font-size: 0.85rem;">{% if locale == 'es' %}Ilumina en color verde en la paleta inferior la siguiente nota correcta que debes colocar.{% else %}Highlight in green color in the bottom palette the next correct note you need to place.{% endif %}</p>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; min-width: 90px;">
+          <span style="color: #f0c040; font-weight: bold; font-size: 0.9rem;">-15%</span>
+          <button class="btn btn-warn btn-sm" id="btn-toggle-dictations-aid-palette" style="width: 100%; justify-content: center; padding: 4px 8px; font-size: 0.8rem;">{% if locale == 'es' %}Activar{% else %}Activate{% endif %}</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="result-actions" style="margin-top: 0; justify-content: center;">
+      <button class="btn btn-success" id="dictations-aids-modal-close">{% if locale == 'es' %}Entendido{% else %}Got it{% endif %}</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.__OPUS_LUDUS__ = {
+    locale: "{{ locale }}",
+    baseUrl: "{{ pathPrefix }}/{{ locale }}/",
+    pathPrefix: "{{ pathPrefix }}",
+    page: "dictations"
+  };
+</script>
+{% gameBundle %}

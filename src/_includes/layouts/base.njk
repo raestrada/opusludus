@@ -22,6 +22,7 @@
         <a href="{{ pathPrefix }}/{{ locale }}/" {% if slug == '' %}class="active"{% endif %}>{{ nav.home }}</a>
         <a href="{{ pathPrefix }}/{{ locale }}/modules/" {% if slug == 'modules/' %}class="active"{% endif %}>{{ nav.modules }}</a>
         <a href="{{ pathPrefix }}/{{ locale }}/analysis/" {% if slug == 'analysis/' %}class="active"{% endif %}>{{ nav.analysis }}</a>
+        <a href="{{ pathPrefix }}/{{ locale }}/dictations/" {% if slug == 'dictations/' %}class="active"{% endif %}>{{ nav.dictations }}</a>
         <span class="lang-switcher">
           {% for loc in site.locales %}
           <a href="{{ pathPrefix }}/{{ loc }}/{{ slug }}" {% if loc == locale %}class="active"{% endif %}>{{ loc }}</a>
@@ -51,11 +52,13 @@
           <a href="{{ pathPrefix }}/es/">Inicio</a>
           <a href="{{ pathPrefix }}/es/modules/">Módulos del Currículo</a>
           <a href="{{ pathPrefix }}/es/analysis/">Análisis de Maestros</a>
+          <a href="{{ pathPrefix }}/es/dictations/">Dictados Melódicos</a>
           {% else %}
           <h4>Quick Links</h4>
           <a href="{{ pathPrefix }}/en/">Home</a>
           <a href="{{ pathPrefix }}/en/modules/">Curriculum Modules</a>
           <a href="{{ pathPrefix }}/en/analysis/">Masterpiece Analysis</a>
+          <a href="{{ pathPrefix }}/en/dictations/">Melodic Dictations</a>
           {% endif %}
         </div>
         

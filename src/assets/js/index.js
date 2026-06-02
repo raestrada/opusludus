@@ -2,10 +2,11 @@
 import { GameManager } from "./game/GameManager";
 import { getAudioEngine } from "./engine/audio";
 import { NotationRenderer } from "./engine/notation";
-import { loadProgress, getStreak, saveModuleResult, calculateXp } from "./store/progress";
+import { loadProgress, getStreak, saveModuleResult, calculateXp, getStarCount } from "./store/progress";
 import { nameToMidi } from "./engine/theory";
 import { LESSONS } from "./store/lessons";
 import { ANALYSIS_CHALLENGES } from "./store/analysis";
+import { DICTATIONS_CHALLENGES } from "./store/dictations";
 
 const CONFIG = window.__OPUS_LUDUS__ || {};
 const curriculum = CONFIG.curriculum || [];
@@ -35,6 +36,16 @@ let analysisPlayTimeout = null;
 let analysisAudio = null;
 let analysisRenderer = null;
 let fullScoreRenderer = null;
+
+// Melodic Dictations variables
+let activeDictation = null;
+let activeDictationComposition = null;
+let selectedDictationNoteAddress = null;
+let isPlayingDictation = false;
+let isPlayingStudent = false;
+let dictationPlayTimeout = null;
+let dictationAudio = null;
+let dictationRenderer = null;
 
 const VALIDATION_TRANSLATIONS = {
   "All notes must be within the staff range.": "Todas las notas deben estar dentro del rango del pentagrama.",
@@ -1753,6 +1764,653 @@ function initAnalysisPage() {
   renderSidebar();
 }
 
+function initDictationsPage() {
+  const dictationsListContainer = document.getElementById("dictations-list");
+  const emptyState = document.getElementById("dictations-empty-state");
+  const contentPanel = document.getElementById("dictations-content");
+  
+  let activeDictationAids = { theory: false, highlightStaff: false, highlightPalette: false };
+
+  dictationAudio = getAudioEngine();
+  dictationAudio.init("synth").catch((err) => {
+    console.warn("Audio engine init failed for dictations:", err);
+  });
+  
+  // Render sidebar catalog
+  function renderSidebar() {
+    if (!dictationsListContainer) return;
+    dictationsListContainer.innerHTML = "";
+    
+    DICTATIONS_CHALLENGES.forEach((challenge) => {
+      const card = document.createElement("div");
+      card.className = "masterpiece-card"; // Reuse masterpiece-card style for identical visual appeal
+      card.dataset.id = challenge.id;
+      
+      const difficultyClass = challenge.difficulty.en.toLowerCase();
+      
+      const progress = loadProgress();
+      const userProgress = progress.modules[challenge.id] || null;
+      let statusHtml = "";
+      if (userProgress && userProgress.completed) {
+        statusHtml = `<div class="card-status">${locale === 'es' ? 'Completado' : 'Completed'} ${"★".repeat(userProgress.stars)}${"☆".repeat(3 - userProgress.stars)}</div>`;
+      }
+      
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="difficulty ${difficultyClass}">${challenge.difficulty[locale]}</span>
+          <span class="concept">${challenge.concept[locale]}</span>
+        </div>
+        <h3>${challenge.name[locale]}</h3>
+        ${statusHtml}
+      `;
+      
+      card.addEventListener("click", () => {
+        dictationsListContainer.querySelectorAll(".masterpiece-card").forEach(c => c.classList.remove("selected"));
+        card.classList.add("selected");
+        loadDictation(challenge);
+      });
+      
+      dictationsListContainer.appendChild(card);
+    });
+  }
+  
+  function highlightSelectedNote() {
+    if (!selectedDictationNoteAddress) return;
+    const { measure, voice, noteIdx } = selectedDictationNoteAddress;
+    const noteId = `vf-dictations-staff-area-m${measure}-v${voice}-n${noteIdx}`;
+    
+    document.querySelectorAll(".selected-dictation-note").forEach(el => el.classList.remove("selected-dictation-note"));
+    
+    const el = document.getElementById(noteId);
+    if (el) {
+      el.classList.add("selected-dictation-note");
+    }
+  }
+
+  function applyAidsHighlights() {
+    if (!activeDictation) return;
+
+    // 1. Highlight target staff notes/rests
+    document.querySelectorAll(".dictations-target-note").forEach(el => {
+      el.classList.remove("dictations-target-note");
+      el.querySelectorAll("use, path").forEach(child => {
+        child.style.removeProperty("fill");
+        child.style.removeProperty("stroke");
+        child.style.removeProperty("filter");
+      });
+    });
+
+    if (activeDictationAids.highlightStaff) {
+      activeDictation.expectedAnswers.reconstruction.forEach(target => {
+        const id = `vf-dictations-staff-area-m${target.measure}-v${target.voice}-n${target.noteIdx}`;
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add("dictations-target-note");
+          el.querySelectorAll("use, path").forEach(child => {
+            child.style.setProperty("fill", "#ff8c00", "important");
+            child.style.setProperty("stroke", "#ff8c00", "important");
+            child.style.setProperty("filter", "drop-shadow(0 0 6px rgba(255, 140, 0, 0.8))", "important");
+          });
+        }
+      });
+    }
+
+    // 2. Highlight correct note in available badges palette
+    const badgesGroup = document.getElementById("dictations-available-note-badges");
+    if (badgesGroup) {
+      badgesGroup.querySelectorAll(".note-badge-btn").forEach(btn => {
+        btn.classList.remove("aid-correct-highlight");
+        btn.style.removeProperty("border-color");
+        btn.style.removeProperty("box-shadow");
+        btn.style.removeProperty("background");
+      });
+
+      if (activeDictationAids.highlightPalette) {
+        let correctPitches = [];
+        if (selectedDictationNoteAddress) {
+          const { measure, voice, noteIdx } = selectedDictationNoteAddress;
+          const matchingAnswer = activeDictation.expectedAnswers.reconstruction.find(
+            ans => ans.measure === measure && ans.voice === voice && ans.noteIdx === noteIdx
+          );
+          if (matchingAnswer) {
+            correctPitches = [matchingAnswer.pitch];
+          }
+        } else {
+          correctPitches = activeDictation.expectedAnswers.reconstruction.map(t => t.pitch);
+        }
+        
+        const correctPitchesSet = new Set(correctPitches);
+        badgesGroup.querySelectorAll(".note-badge-btn").forEach(btn => {
+          const btnPitch = btn.textContent.replace("♭", "b").replace("♯", "#");
+          if (correctPitchesSet.has(btnPitch)) {
+            btn.classList.add("aid-correct-highlight");
+            btn.style.setProperty("border-color", "#2ed573", "important");
+            btn.style.setProperty("box-shadow", "0 0 10px rgba(46, 213, 115, 0.6)", "important");
+            btn.style.setProperty("background", "rgba(46, 213, 115, 0.1)", "important");
+          }
+        });
+      }
+    }
+  }
+
+  function updateTheoryClueText() {
+    const theoryClueText = document.getElementById("dictations-aid-theory-text");
+    if (theoryClueText && activeDictation) {
+      if (activeDictationAids.theory) {
+        let hint = "";
+        if (activeDictation.id === "bach-minuet") {
+          hint = locale === 'es' 
+            ? "Pista: La melodía se mueve por grados conjuntos en Sol mayor. Intenta escuchar la escala ascendente Sol-La-Si-Do."
+            : "Hint: The melody moves stepwise in G major. Try to hear the ascending G-A-B-C scale.";
+        } else if (activeDictation.id === "beethoven-fifth-dictation") {
+          hint = locale === 'es'
+            ? "Pista: El famoso motivo de la 5ª Sinfonía repite la misma nota tres veces antes de caer una tercera mayor a Mib."
+            : "Hint: The famous 5th Symphony motif repeats the same note three times before dropping a major third to Eb.";
+        } else if (activeDictation.id === "mozart-nachtmusik-dictation") {
+          hint = locale === 'es'
+            ? "Pista: Reconoce las notas del arpegio de Sol mayor (Sol-Si-Re). El primer compás asciende Sol4-Re4-Sol4-Si4."
+            : "Hint: Recognize the notes of the G major arpeggio (G-B-D). The first measure ascends G4-D4-G4-B4.";
+        } else if (activeDictation.id === "tchaikovsky-swanlake-dictation") {
+          hint = locale === 'es'
+            ? "Pista: El Lago de los Cisnes tiene una atmósfera sombría en La menor. El arco melódico sube a Mi5 y cae suavemente."
+            : "Hint: Swan Lake has a dark atmosphere in A minor. The melodic arch rises to E5 and falls gently.";
+        }
+        theoryClueText.textContent = hint;
+        theoryClueText.classList.remove("hidden");
+      } else {
+        theoryClueText.classList.add("hidden");
+      }
+    }
+  }
+
+  function updateDictationAidButton(btnId, isActive) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (isActive) {
+      btn.textContent = locale === 'es' ? "Desactivar" : "Deactivate";
+      btn.classList.add("btn-toggle-active");
+    } else {
+      btn.textContent = locale === 'es' ? "Activar" : "Activate";
+      btn.classList.remove("btn-toggle-active");
+    }
+  }
+
+  function loadDictation(challenge) {
+    if (isPlayingDictation || isPlayingStudent) {
+      stopPlayback();
+    }
+    
+    activeDictation = challenge;
+    activeDictationComposition = JSON.parse(JSON.stringify(challenge.composition));
+    selectedDictationNoteAddress = null;
+    activeDictationAids = { theory: false, highlightStaff: false, highlightPalette: false };
+    
+    if (emptyState) emptyState.classList.add("hidden");
+    if (contentPanel) contentPanel.classList.remove("hidden");
+    
+    const titleEl = document.getElementById("dictation-title");
+    const conceptEl = document.getElementById("dictation-concept");
+    const difficultyEl = document.getElementById("dictation-difficulty");
+    const descriptionEl = document.getElementById("dictation-description");
+    
+    if (titleEl) titleEl.textContent = challenge.name[locale];
+    if (conceptEl) conceptEl.textContent = challenge.concept[locale];
+    if (difficultyEl) {
+      difficultyEl.textContent = challenge.difficulty[locale];
+      difficultyEl.className = `difficulty-badge ${challenge.difficulty.en.toLowerCase()}`;
+    }
+    if (descriptionEl) descriptionEl.textContent = challenge.description[locale];
+    
+    if (dictationRenderer) {
+      dictationRenderer.destroy();
+    }
+    
+    dictationRenderer = new NotationRenderer("dictations-staff-area", {
+      clef: activeDictationComposition.clef || "treble",
+      timeSignature: activeDictationComposition.timeSignature || [4, 4],
+      keySignature: activeDictationComposition.keySignature || "C",
+      height: 150
+    });
+    
+    dictationRenderer.setup();
+    dictationRenderer.renderFull(activeDictationComposition);
+    
+    const badgesGroup = document.getElementById("dictations-available-note-badges");
+    if (badgesGroup) {
+      badgesGroup.innerHTML = "";
+      challenge.availableNotes.forEach((noteName) => {
+        const btn = document.createElement("button");
+        btn.className = "note-badge-btn";
+        btn.textContent = noteName.replace("b", "♭").replace("#", "♯");
+        
+        btn.addEventListener("click", () => {
+          if (selectedDictationNoteAddress) {
+            const { measure, voice, noteIdx } = selectedDictationNoteAddress;
+            const noteObj = activeDictationComposition.measures[measure].voices[voice][noteIdx];
+            noteObj.pitch = noteName;
+            
+            const accMatch = noteName.match(/^[A-G]([#b])/);
+            if (accMatch) {
+              noteObj.accidental = accMatch[1];
+            } else {
+              delete noteObj.accidental;
+            }
+            
+            badgesGroup.querySelectorAll(".note-badge-btn").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            
+            dictationAudio.playNote(noteName);
+            dictationRenderer.renderFull(activeDictationComposition);
+            highlightSelectedNote();
+            applyAidsHighlights();
+          } else {
+            const feedbackText = locale === 'es' 
+              ? "Selecciona primero una nota en el pentagrama para cambiar su altura." 
+              : "Select a note on the staff first to edit its pitch.";
+            showDictationFeedback(feedbackText, "error");
+          }
+        });
+        
+        badgesGroup.appendChild(btn);
+      });
+    }
+    
+    const questionTextEl = document.getElementById("dictations-question-text");
+    const optionsGroupEl = document.getElementById("dictations-question-form");
+    
+    if (questionTextEl) questionTextEl.textContent = challenge.question[locale];
+    if (optionsGroupEl) {
+      optionsGroupEl.innerHTML = "";
+      challenge.question.options.forEach((opt, idx) => {
+        const label = document.createElement("label");
+        label.className = "option-container";
+        label.setAttribute("for", `dict-opt-${idx}`);
+        
+        label.innerHTML = `
+          <input type="radio" name="dictation-option" id="dict-opt-${idx}" value="${idx}">
+          <span>${opt[locale]}</span>
+        `;
+        
+        const radio = label.querySelector('input[type="radio"]');
+        radio.addEventListener("change", () => {
+          optionsGroupEl.querySelectorAll(".option-container").forEach(c => c.classList.remove("selected"));
+          label.classList.add("selected");
+        });
+        
+        optionsGroupEl.appendChild(label);
+      });
+    }
+    
+    showDictationFeedback("", "info");
+    applyAidsHighlights();
+  }
+  
+  function showDictationFeedback(text, type = "info") {
+    let fb = document.getElementById("dictations-feedback-container");
+    if (!fb) {
+      fb = document.createElement("div");
+      fb.id = "dictations-feedback-container";
+      fb.className = "feedback-area";
+      const actionArea = document.querySelector(".dictations-actions");
+      if (actionArea) {
+        actionArea.parentNode.insertBefore(fb, actionArea);
+      }
+    }
+    if (fb) {
+      fb.className = `feedback-area ${type}`;
+      fb.textContent = text;
+      fb.style.display = text ? "block" : "none";
+      fb.style.marginBottom = text ? "1.5rem" : "0";
+    }
+  }
+  
+  const playBtn = document.getElementById("btn-play-dictation");
+  const playStudentBtn = document.getElementById("btn-play-student");
+  const stopBtn = document.getElementById("btn-stop-dictation");
+  
+  function getCorrectComposition(challenge) {
+    const compCopy = JSON.parse(JSON.stringify(challenge.composition));
+    challenge.expectedAnswers.reconstruction.forEach(ans => {
+      const note = compCopy.measures[ans.measure].voices[ans.voice][ans.noteIdx];
+      note.pitch = ans.pitch;
+      const accMatch = ans.pitch.match(/^[A-G]([#b])/);
+      if (accMatch) {
+        note.accidental = accMatch[1];
+      } else {
+        delete note.accidental;
+      }
+    });
+    return compCopy;
+  }
+
+  function startPlayback(playCorrect = true) {
+    if (!activeDictation || !activeDictationComposition) return;
+    
+    if (isPlayingDictation || isPlayingStudent) {
+      stopPlayback();
+    }
+
+    if (playBtn) playBtn.classList.add("hidden");
+    if (playStudentBtn) playStudentBtn.classList.add("hidden");
+    if (stopBtn) stopBtn.classList.remove("hidden");
+    
+    if (playCorrect) {
+      isPlayingDictation = true;
+      const correctComp = getCorrectComposition(activeDictation);
+      dictationAudio.loadComposition(correctComp, "dictations-staff-area");
+    } else {
+      isPlayingStudent = true;
+      dictationAudio.loadComposition(activeDictationComposition, "dictations-staff-area");
+    }
+    
+    dictationAudio.play();
+    
+    const timeSig = activeDictationComposition.timeSignature || [4, 4];
+    const bpm = 100;
+    const durationSec = activeDictationComposition.measures.length * timeSig[0] * (60 / bpm);
+    
+    if (dictationPlayTimeout) clearTimeout(dictationPlayTimeout);
+    dictationPlayTimeout = setTimeout(() => {
+      stopPlayback();
+    }, durationSec * 1000 + 300);
+  }
+  
+  function stopPlayback() {
+    if (playBtn) playBtn.classList.remove("hidden");
+    if (playStudentBtn) playStudentBtn.classList.remove("hidden");
+    if (stopBtn) stopBtn.classList.add("hidden");
+    
+    isPlayingDictation = false;
+    isPlayingStudent = false;
+    
+    if (dictationAudio) {
+      dictationAudio.stop();
+    }
+    
+    if (dictationPlayTimeout) {
+      clearTimeout(dictationPlayTimeout);
+      dictationPlayTimeout = null;
+    }
+  }
+  
+  if (playBtn) playBtn.addEventListener("click", () => startPlayback(true));
+  if (playStudentBtn) playStudentBtn.addEventListener("click", () => startPlayback(false));
+  if (stopBtn) stopBtn.addEventListener("click", stopPlayback);
+
+  // Wire Theory & Visual Aids Modal buttons
+  const theoryBtn = document.getElementById("btn-theory-dictation");
+  const aidsBtn = document.getElementById("btn-aids-dictation");
+  const theoryModal = document.getElementById("dictations-theory-modal");
+  const theoryClose = document.getElementById("dictations-theory-modal-close");
+  const aidsModal = document.getElementById("dictations-aids-modal");
+  const aidsClose = document.getElementById("dictations-aids-modal-close");
+
+  if (theoryBtn && theoryModal && theoryClose) {
+    theoryBtn.addEventListener("click", () => {
+      if (!activeDictation) return;
+      if (isPlayingDictation || isPlayingStudent) stopPlayback();
+
+      const contentEl = document.getElementById("dictations-theory-modal-content");
+      if (contentEl) {
+        let content = activeDictation.theory[locale] || activeDictation.theory.en || "";
+        content = content.replace(/### (.*?)\n/g, "<h3>$1</h3>")
+                         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                         .replace(/\n/g, "<br>");
+        contentEl.innerHTML = content;
+      }
+      theoryModal.classList.remove("hidden");
+    });
+
+    theoryClose.addEventListener("click", () => {
+      theoryModal.classList.add("hidden");
+    });
+  }
+
+  if (aidsBtn && aidsModal && aidsClose) {
+    aidsBtn.addEventListener("click", () => {
+      if (!activeDictation) return;
+      if (isPlayingDictation || isPlayingStudent) stopPlayback();
+
+      updateDictationAidButton("btn-toggle-dictations-aid-theory", activeDictationAids.theory);
+      updateDictationAidButton("btn-toggle-dictations-aid-staff", activeDictationAids.highlightStaff);
+      updateDictationAidButton("btn-toggle-dictations-aid-palette", activeDictationAids.highlightPalette);
+      updateTheoryClueText();
+
+      aidsModal.classList.remove("hidden");
+    });
+
+    aidsClose.addEventListener("click", () => {
+      aidsModal.classList.add("hidden");
+    });
+
+    const btnToggleTheory = document.getElementById("btn-toggle-dictations-aid-theory");
+    if (btnToggleTheory) {
+      btnToggleTheory.addEventListener("click", () => {
+        activeDictationAids.theory = !activeDictationAids.theory;
+        updateDictationAidButton("btn-toggle-dictations-aid-theory", activeDictationAids.theory);
+        updateTheoryClueText();
+      });
+    }
+
+    const btnToggleStaff = document.getElementById("btn-toggle-dictations-aid-staff");
+    if (btnToggleStaff) {
+      btnToggleStaff.addEventListener("click", () => {
+        activeDictationAids.highlightStaff = !activeDictationAids.highlightStaff;
+        updateDictationAidButton("btn-toggle-dictations-aid-staff", activeDictationAids.highlightStaff);
+        applyAidsHighlights();
+      });
+    }
+
+    const btnTogglePalette = document.getElementById("btn-toggle-dictations-aid-palette");
+    if (btnTogglePalette) {
+      btnTogglePalette.addEventListener("click", () => {
+        activeDictationAids.highlightPalette = !activeDictationAids.highlightPalette;
+        updateDictationAidButton("btn-toggle-dictations-aid-palette", activeDictationAids.highlightPalette);
+        applyAidsHighlights();
+      });
+    }
+  }
+  
+  const staffArea = document.getElementById("dictations-staff-area");
+  if (staffArea) {
+    staffArea.addEventListener("click", (e) => {
+      if (isPlayingDictation || isPlayingStudent) return;
+      
+      let target = e.target;
+      while (target && target !== staffArea) {
+        if (target.id && (target.id.startsWith("vf-dictations-staff-area-m") || target.id.startsWith("dictations-staff-area-m"))) {
+          const id = target.id;
+          const match = id.match(/m(\d+)-v(\d+)-n(\d+)/);
+          if (match) {
+            const measure = parseInt(match[1]);
+            const voice = parseInt(match[2]);
+            const noteIdx = parseInt(match[3]);
+            
+            selectedDictationNoteAddress = { measure, voice, noteIdx };
+            highlightSelectedNote();
+            applyAidsHighlights();
+            
+            const noteObj = activeDictationComposition.measures[measure].voices[voice][noteIdx];
+            const badgesGroup = document.getElementById("dictations-available-note-badges");
+            if (badgesGroup) {
+              badgesGroup.querySelectorAll(".note-badge-btn").forEach(b => {
+                b.classList.remove("selected");
+                if (noteObj.pitch && b.textContent === noteObj.pitch.replace("b", "♭").replace("#", "♯")) {
+                  b.classList.add("selected");
+                }
+              });
+            }
+            
+            if (noteObj.pitch) {
+              dictationAudio.playNote(noteObj.pitch);
+            }
+            return;
+          }
+        }
+        target = target.parentElement;
+      }
+    });
+  }
+  
+  const resetBtn = document.getElementById("btn-reset-dictation");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (!activeDictation) return;
+      if (confirm(locale === 'es' ? "¿Seguro que quieres reiniciar este desafío?" : "Are you sure you want to reset this challenge?")) {
+        loadDictation(activeDictation);
+      }
+    });
+  }
+  
+  const submitBtn = document.getElementById("btn-submit-dictation");
+  if (submitBtn) {
+    submitBtn.addEventListener("click", () => {
+      if (!activeDictation || !activeDictationComposition) return;
+      
+      if (isPlayingDictation || isPlayingStudent) {
+        stopPlayback();
+      }
+      
+      let reconstructionCorrect = true;
+      const expectedReconstruction = activeDictation.expectedAnswers.reconstruction;
+      
+      for (const expected of expectedReconstruction) {
+        const m = expected.measure;
+        const v = expected.voice;
+        const n = expected.noteIdx;
+        const note = activeDictationComposition.measures[m]?.voices[v]?.[n];
+        
+        if (!note || note.pitch !== expected.pitch) {
+          reconstructionCorrect = false;
+          break;
+        }
+      }
+      
+      const selectedRadio = document.querySelector('input[name="dictation-option"]:checked');
+      let questionCorrect = false;
+      
+      if (selectedRadio) {
+        const optIdx = parseInt(selectedRadio.value);
+        const opt = activeDictation.question.options[optIdx];
+        if (opt && opt.correct) {
+          questionCorrect = true;
+        }
+      }
+      
+      let stars = 0;
+      let feedback = "";
+      
+      if (reconstructionCorrect && questionCorrect) {
+        stars = 3;
+        feedback = locale === 'es' 
+          ? "¡Excelente dictado! Has completado la melodía y respondido la pregunta correctamente." 
+          : "Excellent dictation! You completed the melody and answered the question correctly.";
+      } else if (reconstructionCorrect) {
+        stars = 2;
+        feedback = locale === 'es' 
+          ? "¡Muy cerca! La transcripción de la melodía es correcta, pero fallaste en la pregunta del intervalo/concepto." 
+          : "Very close! The transcription of the melody is correct, but you missed the interval/concept question.";
+      } else if (questionCorrect) {
+        stars = 1;
+        feedback = locale === 'es' 
+          ? "¡Bien oído! Respondiste la pregunta correctamente, pero a la melodía aún le faltan notas correctas." 
+          : "Good ear! You answered the question correctly, but the melody is still missing correct notes.";
+      } else {
+        stars = 0;
+        feedback = locale === 'es' 
+          ? "Inténtalo de nuevo. Presta atención al movimiento de las alturas y vuelve a escuchar el dictado." 
+          : "Try again. Pay close attention to pitch movement and listen to the dictation again.";
+      }
+      
+      // Calculate aids penalty
+      let penalty = 0;
+      if (activeDictationAids.theory) penalty += 5;
+      if (activeDictationAids.highlightStaff) penalty += 10;
+      if (activeDictationAids.highlightPalette) penalty += 15;
+ 
+      const baseScore = stars === 3 ? 100 : (stars === 2 ? 75 : (stars === 1 ? 50 : 0));
+      const finalScore = Math.max(0, baseScore - penalty);
+      const finalStars = getStarCount(finalScore);
+ 
+      const streak = getStreak();
+      const xpEarned = calculateXp(activeDictation.xpBase, finalScore, streak);
+      
+      if (finalStars > 0) {
+        saveModuleResult(activeDictation.id, finalStars, xpEarned);
+      }
+      
+      showDictationResultModal(finalStars, xpEarned, feedback, baseScore, penalty);
+      renderSidebar();
+    });
+  }
+  
+  const resultModal = document.getElementById("dictations-result-modal");
+  const resultBtnClose = document.getElementById("dictations-result-btn-close");
+  
+  function showDictationResultModal(stars, xpEarned, feedbackText, baseScore = 100, penalty = 0) {
+    if (!resultModal) return;
+    
+    const iconEl = document.getElementById("dictations-result-icon");
+    const titleEl = document.getElementById("dictations-result-title");
+    const feedbackEl = document.getElementById("dictations-result-feedback");
+    const xpEl = document.getElementById("dictations-result-xp");
+    const starsContainer = document.getElementById("dictations-result-stars");
+    
+    if (iconEl) {
+      iconEl.textContent = stars >= 2 ? "🎉" : (stars === 1 ? "👍" : "🎧");
+    }
+    
+    if (titleEl) {
+      if (stars === 3) {
+        titleEl.textContent = locale === 'es' ? "¡Perfecto!" : "Perfect!";
+      } else if (stars === 2) {
+        titleEl.textContent = locale === 'es' ? "¡Excelente!" : "Excellent!";
+      } else if (stars === 1) {
+        titleEl.textContent = locale === 'es' ? "¡Bien hecho!" : "Well done!";
+      } else {
+        titleEl.textContent = locale === 'es' ? "Sigue practicando" : "Keep practicing";
+      }
+    }
+    
+    if (feedbackEl) feedbackEl.textContent = feedbackText;
+    if (xpEl) xpEl.textContent = `+${xpEarned} XP`;
+    
+    if (starsContainer) {
+      starsContainer.innerHTML = "";
+      for (let i = 0; i < 3; i++) {
+        const star = document.createElement("span");
+        star.className = `modal-star ${i < stars ? 'active' : ''}`;
+        star.textContent = "★";
+        starsContainer.appendChild(star);
+      }
+    }
+ 
+    // Display penalty breakdown
+    const breakdownArea = document.getElementById("dictations-score-breakdown-area");
+    const baseSpan = document.getElementById("dictations-breakdown-base-score");
+    const penaltySpan = document.getElementById("dictations-breakdown-penalty");
+    if (breakdownArea && baseSpan && penaltySpan) {
+      if (penalty > 0) {
+        breakdownArea.style.display = "flex";
+        baseSpan.textContent = `Base: ${baseScore}%`;
+        penaltySpan.textContent = locale === 'es' ? `Ayudas: -${penalty}%` : `Aids: -${penalty}%`;
+      } else {
+        breakdownArea.style.display = "none";
+      }
+    }
+    
+    resultModal.classList.remove("hidden");
+  }
+  
+  if (resultBtnClose) {
+    resultBtnClose.addEventListener("click", () => {
+      if (resultModal) resultModal.classList.add("hidden");
+    });
+  }
+  
+  renderSidebar();
+}
+
 // Start game when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
   if (CONFIG.page === "analysis") {
@@ -1760,6 +2418,12 @@ document.addEventListener("DOMContentLoaded", () => {
       initAnalysisPage();
     } catch (err) {
       console.error("Error al cargar la página de análisis:", err);
+    }
+  } else if (CONFIG.page === "dictations") {
+    try {
+      initDictationsPage();
+    } catch (err) {
+      console.error("Error al cargar la página de dictados:", err);
     }
   } else {
     // Load the lesson stage first
@@ -1777,6 +2441,7 @@ window.addEventListener("beforeunload", () => {
   if (playTimeout) clearTimeout(playTimeout);
   if (examplePlayTimeout) clearTimeout(examplePlayTimeout);
   if (analysisPlayTimeout) clearTimeout(analysisPlayTimeout);
+  if (dictationPlayTimeout) clearTimeout(dictationPlayTimeout);
   if (gameManager) {
     try {
       gameManager.dispose();
@@ -1798,9 +2463,23 @@ window.addEventListener("beforeunload", () => {
       // Ignore
     }
   }
+  if (dictationRenderer) {
+    try {
+      dictationRenderer.destroy();
+    } catch (e) {
+      // Ignore
+    }
+  }
   if (analysisAudio) {
     try {
       analysisAudio.dispose();
+    } catch (e) {
+      // Ignore
+    }
+  }
+  if (dictationAudio) {
+    try {
+      dictationAudio.dispose();
     } catch (e) {
       // Ignore
     }
