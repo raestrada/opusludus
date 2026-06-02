@@ -240,6 +240,12 @@ function loadLesson() {
     return;
   }
 
+  // Apply dynamic background image of the module's level
+  const playPageEl = document.querySelector(".play-page");
+  if (playPageEl) {
+    playPageEl.style.setProperty("--play-bg-url", `url('/assets/images/level${currentModule.level || 1}_bg.png')`);
+  }
+
   // Look up custom lesson or generate fallback
   let lesson = LESSONS[moduleId];
   if (!lesson) {

@@ -392,6 +392,10 @@ img {
   flex-direction: column;
   align-items: center;
   width: 100%;
+  background-color: var(--bg);
+  background-image: linear-gradient(135deg, rgba(10, 10, 26, 0.94), rgba(16, 16, 38, 0.96)), var(--play-bg-url);
+  background-size: cover;
+  background-position: center;
 }
 
 /* Lesson View styling */
@@ -400,7 +404,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 .lesson-header {
@@ -541,7 +545,7 @@ img {
 .game-container {
   width: 100%;
   max-width: 1024px;
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -557,7 +561,9 @@ img {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1.5rem;
-  background: rgba(26, 26, 56, 0.4);
+  background: rgba(16, 16, 38, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -613,6 +619,8 @@ img {
 /* Tips bar */
 .hud-tips-bar {
   background: rgba(124, 92, 231, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   padding: 0.5rem 1.5rem;
   text-align: left;
@@ -631,7 +639,7 @@ img {
 }
 
 .staff-section {
-  background: #111128;
+  background: transparent;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -2054,7 +2062,7 @@ body.play-page-active {
   flex-direction: column;
   justify-content: flex-start;
   padding: 1.5rem 2.5rem !important;
-  background: var(--bg-secondary);
+  background: transparent;
   gap: 1.25rem;
   overflow-y: auto; /* Allow internal scrolling if content is long, preserving buttons */
 }
