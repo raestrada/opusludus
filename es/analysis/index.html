@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Una plataforma interactiva y gamificada para aprender composición musical — desde fundamentos hasta técnicas avanzadas. Currículo ordenado por conservatorio con experiencia de juego.">
+  <title>Opus Ludus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/opusludus/assets/css/main.css">
+  
+</head>
+<body>
+  <div class="site-wrapper">
+    <header class="site-header">
+      <a href="/opusludus/es/" class="site-logo">
+        <span class="icon">🎼</span>
+        Opus Ludus
+      </a>
+      <nav class="site-nav">
+        <a href="/opusludus/es/" >Inicio</a>
+        <a href="/opusludus/es/modules/" >Módulos</a>
+        <a href="/opusludus/es/analysis/" class="active">Análisis</a>
+        <span class="lang-switcher">
+          
+          <a href="/opusludus/en/analysis/" >en</a>
+          
+          <a href="/opusludus/es/analysis/" class="active">es</a>
+          
+        </span>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      
+<div class="analysis-page" style="--analysis-bg-url: url('/opusludus/assets/images/analysis_bg.png');">
+  <div class="analysis-container">
+    
+    <!-- Left Sidebar: Masterpieces Catalog -->
+    <aside class="analysis-sidebar">
+      <div class="sidebar-header">
+        <h2>Obras Maestras</h2>
+        <p>Selecciona una obra para analizar y reconstruir</p>
+      </div>
+      
+      <div class="masterpiece-list" id="masterpiece-list">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </aside>
+    
+    <!-- Right Panel: Workstation -->
+    <main class="analysis-workstation">
+      <div class="workstation-card glass-panel" id="analysis-empty-state">
+        <div class="empty-content">
+          <span class="empty-icon">🎼</span>
+          <h3>Comienza el Análisis</h3>
+          <p>Selecciona una obra maestra del catálogo izquierdo para cargar la partitura y comenzar el desafío.</p>
+        </div>
+      </div>
+      
+      <div class="workstation-card glass-panel hidden" id="analysis-content">
+        <!-- Workstation Header -->
+        <div class="workstation-header">
+          <div class="header-left">
+            <span class="badge" id="challenge-concept">Concept</span>
+            <h1 id="challenge-title">Mozart — Symphony No. 40</h1>
+          </div>
+          <div class="header-right">
+            <span class="difficulty-badge" id="challenge-difficulty">Medium</span>
+          </div>
+        </div>
+        
+        <!-- Challenge Objective -->
+        <div class="challenge-objective-card">
+          <p id="challenge-description">Objective text goes here...</p>
+        </div>
+        
+        <!-- Staff & Music Area -->
+        <div class="staff-section">
+          <div class="staff-controls">
+            <button class="btn btn-secondary btn-sm" id="btn-play-analysis">
+              <span class="icon">▶</span> Escuchar Obra
+            </button>
+            <button class="btn btn-stop btn-sm hidden" id="btn-stop-analysis">
+              <span class="icon">■</span> Detener
+            </button>
+            <span class="control-tip">
+              💡 Haz clic en los silencios para ingresar la nota seleccionada
+            </span>
+          </div>
+          
+          <!-- Interactive Staff Canvas -->
+          <div class="staff-wrapper">
+            <div id="analysis-staff-area"></div>
+          </div>
+          
+          <!-- Reconstruction Palette -->
+          <div class="palette-section" id="reconstruction-palette">
+            <h4>Paleta de Notas</h4>
+            <div class="note-badges-group" id="available-note-badges">
+              <!-- Dynamically populated available note buttons (like badges) -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Question Section -->
+        <div class="analysis-question-card">
+          <h3>Pregunta de Análisis</h3>
+          <p class="question-text" id="question-text">Question text...</p>
+          
+          <form class="options-group" id="question-form">
+            <!-- Dynamically populated multiple-choice radio options -->
+          </form>
+        </div>
+        
+        <!-- Feedback Messages -->
+        <div class="feedback-area" id="analysis-feedback-container" style="display: none; margin-bottom: 1.5rem;"></div>
+        
+        <!-- Action Buttons -->
+        <div class="analysis-actions">
+          <button class="btn btn-secondary" id="btn-reset-analysis">
+            Reiniciar
+          </button>
+          <button class="btn btn-success btn-large" id="btn-submit-analysis">
+            Validar Respuesta <span class="icon">➔</span>
+          </button>
+        </div>
+      </div>
+    </main>
+    
+  </div>
+</div>
+
+<!-- Custom Results Modal -->
+<div class="modal-overlay hidden" id="analysis-result-modal">
+  <div class="result-modal glass-panel">
+    <div class="result-icon" id="result-icon">🎉</div>
+    <h2 id="result-title">¡Desafío Completado!</h2>
+    
+    <div class="stars-container" id="result-stars">
+      <span class="modal-star active">★</span>
+      <span class="modal-star active">★</span>
+      <span class="modal-star">★</span>
+    </div>
+    
+    <p id="result-feedback">Feedback message...</p>
+    
+    <div class="result-stats">
+      <div class="stat-box">
+        <span class="stat-label">XP</span>
+        <span class="stat-value" id="result-xp">+75</span>
+      </div>
+    </div>
+    
+    <button class="btn btn-success btn-large" id="result-btn-close">
+      Entendido
+    </button>
+  </div>
+</div>
+
+<script>
+  window.__OPUS_LUDUS__ = {
+    locale: "es",
+    baseUrl: "/opusludus/es/",
+    pathPrefix: "/opusludus",
+    page: "analysis"
+  };
+</script>
+<script src="/opusludus/assets/js/bundle.js"></script>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <span class="footer-logo">🎼 Opus Ludus</span>
+          
+          <p class="footer-desc">El arte de la composición clásica, gamificado. Diseñado para jóvenes músicos del conservatorio y academias de música.</p>
+          
+        </div>
+        
+        <div class="footer-links-group">
+          
+          <h4>Enlaces Rápidos</h4>
+          <a href="/opusludus/es/">Inicio</a>
+          <a href="/opusludus/es/modules/">Módulos del Currículo</a>
+          <a href="/opusludus/es/analysis/">Análisis de Maestros</a>
+          
+        </div>
+        
+        <div class="footer-links-group">
+          
+          <h4>Código Abierto</h4>
+          <a href="https://github.com/raestrada/opusludus" target="_blank" rel="noopener noreferrer">📂 GitHub Repositorio</a>
+          <a href="https://github.com/raestrada/opusludus/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">🤝 Cómo Colaborar</a>
+          <a href="https://github.com/raestrada/opusludus/issues" target="_blank" rel="noopener noreferrer">🐛 Reportar un Error</a>
+          
+        </div>
+
+        <div class="footer-credits">
+          
+          <h4>Agradecimientos</h4>
+          <p>Con especial dedicatoria a los jóvenes estudiantes del conservatorio y academias de música.</p>
+          
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Opus Ludus. Creado con 💛 para jóvenes virtuosos.</p>
+      </div>
+    </footer>
+  </div>
+  
+</body>
+</html>
