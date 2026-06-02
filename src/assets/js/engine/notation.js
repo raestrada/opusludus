@@ -35,6 +35,7 @@ function toVFDuration(duration) {
 export class NotationRenderer {
   constructor(containerId, options = {}) {
     this.containerId = containerId;
+    this._widthExplicit = "width" in options;
     this.options = {
       clef: options.clef || "treble",
       timeSignature: options.timeSignature || [4, 4],
@@ -59,7 +60,7 @@ export class NotationRenderer {
 
     // Use container's width if available and no explicit width set
     const containerWidth = container.clientWidth;
-    if (containerWidth > 0 && !this.options.width) {
+    if (containerWidth > 0 && !this._widthExplicit) {
       this.options.width = containerWidth;
     }
     if (!this.options.height) {

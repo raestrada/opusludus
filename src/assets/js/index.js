@@ -1348,7 +1348,6 @@ function initAnalysisPage() {
       clef: activeComposition.clef || "treble",
       timeSignature: activeComposition.timeSignature || [4, 4],
       keySignature: activeComposition.keySignature || "C",
-      width: 800,
       height: activeComposition.clef === "grand" ? 220 : 150
     });
     
