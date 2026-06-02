@@ -17,6 +17,10 @@ export const ANALYSIS_CHALLENGES = [
       en: "The final cadence (V-I) of this Bach chorale is missing the bass voice in measure 2. The V chord (G major) must resolve to the I chord (C major). Assign the correct notes to the bass to resolve the tension.",
       es: "A la cadencia final (V-I) de este coral de Bach le faltan las notas del bajo en el compás 2. El acorde V (Sol mayor) debe resolver al acorde I (Do mayor). Asigna las notas correspondientes al bajo para resolver la tensión."
     },
+    theory: {
+      en: "### The Perfect Authentic Cadence (V-I)\n\nA **cadence** is a point of resolution or rest at the end of a musical phrase. A Perfect Authentic Cadence occurs when the dominant chord (degree V, G major in C major) resolves to the tonic chord (degree I, C major in C major), with both chords in root position (the bass moving from G to C).\n\nThis movement creates the strongest sense of finality in classical tonal music.",
+      es: "### La Cadencia Armónica Perfecta (V-I)\n\nUna **cadencia** es el punto de resolución o descanso al final de una frase musical. La Cadencia Auténtica Perfecta se produce cuando el acorde de dominante (grado V, Sol en Do mayor) resuelve en el acorde de tónica (grado I, Do en Do mayor), con ambos acordes en estado fundamental (las fundamentales en el bajo: Sol2 resolviendo a Do3).\n\nEste movimiento crea la sensación más fuerte de conclusión en la música clásica tonal."
+    },
     composition: {
       clef: "grand",
       timeSignature: [4, 4],
@@ -83,6 +87,10 @@ export const ANALYSIS_CHALLENGES = [
     description: {
       en: "Mozart's famous opening theme contains a severe voice leading error introduced in measure 2 (parallel octaves between melody and bass). Select the incorrect bass note and change it to F (F3) to resolve it.",
       es: "El famoso tema inicial de Mozart contiene un error de conducción de voces en el compás 2 (octavas paralelas entre melodía y bajo). Selecciona la nota incorrecta en el bajo y corrígela a Fa (F3) para resolverlo."
+    },
+    theory: {
+      en: "### Voice Leading: Parallel Octaves\n\nIn classical harmony, each voice (soprano, alto, tenor, bass) must maintain its melodic independence. **Parallel octaves** occur when two voices separated by an octave move in the same direction to another octave (e.g., soprano moving D4 to C4, while bass moves D3 to C3).\n\nThis is forbidden in classical style because it momentarily merges the two voices, destroying their independence and textural richness.",
+      es: "### Conducción de Voces: Octavas Paralelas\n\nEn la armonía clásica, cada voz (soprano, contralto, tenor, bajo) debe mantener su independencia melódica. Las **octavas paralelas** ocurren cuando dos voces separadas por una octava se mueven en la misma dirección hacia otra octava (ej. la soprano se mueve de Re4 a Do4, mientras el bajo se mueve de Re3 a Do3).\n\nEsto está prohibido en el estilo clásico porque fusiona momentáneamente las dos voces, destruyendo su independencia e individualidad tímbrica."
     },
     composition: {
       clef: "grand",
@@ -152,6 +160,10 @@ export const ANALYSIS_CHALLENGES = [
     description: {
       en: "The first phrase of Beethoven's theme resolves to the dominant (A4), but it was mistakenly written ending on G4. Select the last note of measure 4 and correct it to A4.",
       es: "La primera frase del tema de Beethoven resuelve a la dominante (La4), pero fue escrita erróneamente terminando en Sol4. Selecciona la última nota del compás 4 y corrígela a La4."
+    },
+    theory: {
+      en: "### Period Structure & Half Cadence\n\nA **musical period** is often split into two phrases: an **antecedent** (question) and a **consequent** (answer). The antecedent typically ends with a **half cadence** on degree V (dominant pitch A in G major key), which leaves the melody suspended or unfinished.\n\nThe consequent phrase then repeats the opening but resolves stably on the tonic (G major), completing the cycle of tension and resolution.",
+      es: "### La Estructura de Período y la Semicadencia\n\nUn **período musical** a menudo se divide en dos frases: un **antecedente** (pregunta) y un **consecuente** (respuesta). El antecedente suele terminar con una **semicadencia** en el grado V (nota La en tonalidad de Sol mayor), lo que genera tensión y deja la melodía suspendida o inconclusa.\n\nLa frase consecuente repite el tema pero concluye de forma estable en la tónica (Sol mayor), cerrando el ciclo de tensión-resolución."
     },
     composition: {
       clef: "treble",

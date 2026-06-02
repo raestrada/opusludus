@@ -1133,6 +1133,8 @@ function initAnalysisPage() {
   const emptyState = document.getElementById("analysis-empty-state");
   const contentPanel = document.getElementById("analysis-content");
   
+  let activeAnalysisAids = { theory: false, highlightStaff: false, highlightPalette: false };
+
   analysisAudio = getAudioEngine();
   analysisAudio.init("synth").catch((err) => {
     console.warn("Audio engine init failed for analysis:", err);
@@ -1189,6 +1191,97 @@ function initAnalysisPage() {
     }
   }
 
+  function applyAidsHighlights() {
+    if (!activeChallenge) return;
+
+    // 1. Highlight target staff notes/rests
+    document.querySelectorAll(".analysis-target-note").forEach(el => {
+      el.classList.remove("analysis-target-note");
+      el.querySelectorAll("use, path").forEach(child => {
+        child.style.removeProperty("fill");
+        child.style.removeProperty("stroke");
+        child.style.removeProperty("filter");
+      });
+    });
+
+    if (activeAnalysisAids.highlightStaff) {
+      activeChallenge.expectedAnswers.reconstruction.forEach(target => {
+        const id = `vf-analysis-staff-area-m${target.measure}-v${target.voice}-n${target.noteIdx}`;
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add("analysis-target-note");
+          el.querySelectorAll("use, path").forEach(child => {
+            child.style.setProperty("fill", "#ff8c00", "important");
+            child.style.setProperty("stroke", "#ff8c00", "important");
+            child.style.setProperty("filter", "drop-shadow(0 0 6px rgba(255, 140, 0, 0.8))", "important");
+          });
+        }
+      });
+    }
+
+    // 2. Highlight correct note in available badges palette
+    const badgesGroup = document.getElementById("available-note-badges");
+    if (badgesGroup) {
+      badgesGroup.querySelectorAll(".note-badge-btn").forEach(btn => {
+        btn.classList.remove("aid-correct-highlight");
+        btn.style.removeProperty("border-color");
+        btn.style.removeProperty("box-shadow");
+        btn.style.removeProperty("background");
+      });
+
+      if (activeAnalysisAids.highlightPalette) {
+        const correctPitches = new Set(activeChallenge.expectedAnswers.reconstruction.map(t => t.pitch));
+        badgesGroup.querySelectorAll(".note-badge-btn").forEach(btn => {
+          const btnPitch = btn.textContent.replace("♭", "b").replace("♯", "#");
+          if (correctPitches.has(btnPitch)) {
+            btn.classList.add("aid-correct-highlight");
+            btn.style.setProperty("border-color", "#2ed573", "important");
+            btn.style.setProperty("box-shadow", "0 0 10px rgba(46, 213, 115, 0.6)", "important");
+            btn.style.setProperty("background", "rgba(46, 213, 115, 0.1)", "important");
+          }
+        });
+      }
+    }
+  }
+
+  function updateTheoryClueText() {
+    const theoryClueText = document.getElementById("aid-theory-text");
+    if (theoryClueText && activeChallenge) {
+      if (activeAnalysisAids.theory) {
+        let hint = "";
+        if (activeChallenge.id === "bach-chorale") {
+          hint = locale === 'es' 
+            ? "Pista: El bajo debe moverse del grado V (G2 en el primer silencio) al grado I (C3 en el segundo silencio)."
+            : "Hint: The bass must move from degree V (G2 on the first rest) to degree I (C3 on the second rest).";
+        } else if (activeChallenge.id === "mozart-symphony40") {
+          hint = locale === 'es'
+            ? "Pista: En el compás 2, el primer bajo (D3) se mueve en paralelo con el D4 de la melodía. Cámbialo por Fa (F3)."
+            : "Hint: In measure 2, the first bass note (D3) moves in parallel with D4 in the melody. Change it to F3.";
+        } else if (activeChallenge.id === "beethoven-ode") {
+          hint = locale === 'es'
+            ? "Pista: La melodía clásica debe resolver en la dominante (A4) al final del compás 4 en lugar del Sol (G4) actual."
+            : "Hint: The classical melody must resolve on the dominant (A4) at the end of measure 4 instead of the current G4.";
+        }
+        theoryClueText.textContent = hint;
+        theoryClueText.classList.remove("hidden");
+      } else {
+        theoryClueText.classList.add("hidden");
+      }
+    }
+  }
+
+  function updateAnalysisAidButton(btnId, isActive) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (isActive) {
+      btn.textContent = locale === 'es' ? "Desactivar" : "Deactivate";
+      btn.classList.add("btn-toggle-active");
+    } else {
+      btn.textContent = locale === 'es' ? "Activar" : "Activate";
+      btn.classList.remove("btn-toggle-active");
+    }
+  }
+
   function loadChallenge(challenge) {
     if (isPlayingAnalysis) {
       stopPlayback();
@@ -1197,6 +1290,7 @@ function initAnalysisPage() {
     activeChallenge = challenge;
     activeComposition = JSON.parse(JSON.stringify(challenge.composition));
     selectedNoteAddress = null;
+    activeAnalysisAids = { theory: false, highlightStaff: false, highlightPalette: false };
     
     if (emptyState) emptyState.classList.add("hidden");
     if (contentPanel) contentPanel.classList.remove("hidden");
@@ -1256,6 +1350,7 @@ function initAnalysisPage() {
             analysisAudio.playNote(noteName);
             analysisRenderer.renderFull(activeComposition);
             highlightSelectedNote();
+            applyAidsHighlights();
           } else {
             const feedbackText = locale === 'es' 
               ? "Selecciona primero una nota en el pentagrama para cambiar su altura." 
@@ -1295,6 +1390,7 @@ function initAnalysisPage() {
     }
     
     showAnalysisFeedback("", "info");
+    applyAidsHighlights();
   }
   
   function showAnalysisFeedback(text, type = "info") {
@@ -1352,6 +1448,80 @@ function initAnalysisPage() {
   
   if (playBtn) playBtn.addEventListener("click", startPlayback);
   if (stopBtn) stopBtn.addEventListener("click", stopPlayback);
+
+  // Wire Theory & Visual Aids Modal buttons
+  const theoryBtn = document.getElementById("btn-theory-analysis");
+  const aidsBtn = document.getElementById("btn-aids-analysis");
+  const theoryModal = document.getElementById("analysis-theory-modal");
+  const theoryClose = document.getElementById("analysis-theory-modal-close");
+  const aidsModal = document.getElementById("analysis-aids-modal");
+  const aidsClose = document.getElementById("analysis-aids-modal-close");
+
+  if (theoryBtn && theoryModal && theoryClose) {
+    theoryBtn.addEventListener("click", () => {
+      if (!activeChallenge) return;
+      if (isPlayingAnalysis) stopPlayback();
+
+      const contentEl = document.getElementById("analysis-theory-modal-content");
+      if (contentEl) {
+        let content = activeChallenge.theory[locale] || activeChallenge.theory.en || "";
+        content = content.replace(/### (.*?)\n/g, "<h3>$1</h3>")
+                         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                         .replace(/\n/g, "<br>");
+        contentEl.innerHTML = content;
+      }
+      theoryModal.classList.remove("hidden");
+    });
+
+    theoryClose.addEventListener("click", () => {
+      theoryModal.classList.add("hidden");
+    });
+  }
+
+  if (aidsBtn && aidsModal && aidsClose) {
+    aidsBtn.addEventListener("click", () => {
+      if (!activeChallenge) return;
+      if (isPlayingAnalysis) stopPlayback();
+
+      updateAnalysisAidButton("btn-toggle-analysis-aid-theory", activeAnalysisAids.theory);
+      updateAnalysisAidButton("btn-toggle-analysis-aid-staff", activeAnalysisAids.highlightStaff);
+      updateAnalysisAidButton("btn-toggle-analysis-aid-palette", activeAnalysisAids.highlightPalette);
+      updateTheoryClueText();
+
+      aidsModal.classList.remove("hidden");
+    });
+
+    aidsClose.addEventListener("click", () => {
+      aidsModal.classList.add("hidden");
+    });
+
+    const btnToggleTheory = document.getElementById("btn-toggle-analysis-aid-theory");
+    if (btnToggleTheory) {
+      btnToggleTheory.addEventListener("click", () => {
+        activeAnalysisAids.theory = !activeAnalysisAids.theory;
+        updateAnalysisAidButton("btn-toggle-analysis-aid-theory", activeAnalysisAids.theory);
+        updateTheoryClueText();
+      });
+    }
+
+    const btnToggleStaff = document.getElementById("btn-toggle-analysis-aid-staff");
+    if (btnToggleStaff) {
+      btnToggleStaff.addEventListener("click", () => {
+        activeAnalysisAids.highlightStaff = !activeAnalysisAids.highlightStaff;
+        updateAnalysisAidButton("btn-toggle-analysis-aid-staff", activeAnalysisAids.highlightStaff);
+        applyAidsHighlights();
+      });
+    }
+
+    const btnTogglePalette = document.getElementById("btn-toggle-analysis-aid-palette");
+    if (btnTogglePalette) {
+      btnTogglePalette.addEventListener("click", () => {
+        activeAnalysisAids.highlightPalette = !activeAnalysisAids.highlightPalette;
+        updateAnalysisAidButton("btn-toggle-analysis-aid-palette", activeAnalysisAids.highlightPalette);
+        applyAidsHighlights();
+      });
+    }
+  }
   
   const staffArea = document.getElementById("analysis-staff-area");
   if (staffArea) {
@@ -1463,15 +1633,24 @@ function initAnalysisPage() {
           : "Try again. Analyze the score to find the errors and review the theoretical concepts.";
       }
       
+      // Calculate aids penalty
+      let penalty = 0;
+      if (activeAnalysisAids.theory) penalty += 5;
+      if (activeAnalysisAids.highlightStaff) penalty += 10;
+      if (activeAnalysisAids.highlightPalette) penalty += 15;
+
+      const baseScore = stars === 3 ? 100 : (stars === 2 ? 75 : (stars === 1 ? 50 : 0));
+      const finalScore = Math.max(0, baseScore - penalty);
+      const finalStars = getStarCount(finalScore);
+
       const streak = getStreak();
-      const scorePercent = stars === 3 ? 100 : (stars === 2 ? 75 : (stars === 1 ? 50 : 0));
-      const xpEarned = calculateXp(activeChallenge.xpBase, scorePercent, streak);
+      const xpEarned = calculateXp(activeChallenge.xpBase, finalScore, streak);
       
-      if (stars > 0) {
-        saveModuleResult(activeChallenge.id, stars, xpEarned);
+      if (finalStars > 0) {
+        saveModuleResult(activeChallenge.id, finalStars, xpEarned);
       }
       
-      showAnalysisResultModal(stars, xpEarned, feedback);
+      showAnalysisResultModal(finalStars, xpEarned, feedback, baseScore, penalty);
       renderSidebar();
     });
   }
@@ -1479,7 +1658,7 @@ function initAnalysisPage() {
   const resultModal = document.getElementById("analysis-result-modal");
   const resultBtnClose = document.getElementById("result-btn-close");
   
-  function showAnalysisResultModal(stars, xpEarned, feedbackText) {
+  function showAnalysisResultModal(stars, xpEarned, feedbackText, baseScore = 100, penalty = 0) {
     if (!resultModal) return;
     
     const iconEl = document.getElementById("result-icon");
@@ -1514,6 +1693,20 @@ function initAnalysisPage() {
         star.className = `modal-star ${i < stars ? 'active' : ''}`;
         star.textContent = "★";
         starsContainer.appendChild(star);
+      }
+    }
+
+    // Display penalty breakdown
+    const breakdownArea = document.getElementById("analysis-score-breakdown-area");
+    const baseSpan = document.getElementById("analysis-breakdown-base-score");
+    const penaltySpan = document.getElementById("analysis-breakdown-penalty");
+    if (breakdownArea && baseSpan && penaltySpan) {
+      if (penalty > 0) {
+        breakdownArea.style.display = "flex";
+        baseSpan.textContent = `Base: ${baseScore}%`;
+        penaltySpan.textContent = locale === 'es' ? `Ayudas: -${penalty}%` : `Aids: -${penalty}%`;
+      } else {
+        breakdownArea.style.display = "none";
       }
     }
     
