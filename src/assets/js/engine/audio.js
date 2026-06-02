@@ -77,11 +77,12 @@ export class AudioEngine {
   }
 
   // Load a composition and schedule playback
-  loadComposition(composition) {
+  loadComposition(composition, containerId = "opus-staff-area") {
     Tone.Transport.cancel();
     Tone.Transport.stop();
     this.isPlaying = false;
     this._scheduledIds = [];
+    this._clearAllHighlights();
 
     if (!composition || !composition.measures) return;
 
@@ -91,28 +92,51 @@ export class AudioEngine {
 
     let absoluteBeat = 0; // Beat position in the transport
 
-    for (const measure of composition.measures) {
+    for (let measureIdx = 0; measureIdx < composition.measures.length; measureIdx++) {
+      const measure = composition.measures[measureIdx];
       const voices = measure.voices || [[]];
-      for (const voice of voices) {
+      for (let voiceIdx = 0; voiceIdx < voices.length; voiceIdx++) {
+        const voice = voices[voiceIdx];
         let beatOffset = 0;
-        for (const note of voice) {
+        for (let noteIdx = 0; noteIdx < voice.length; noteIdx++) {
+          const note = voice[noteIdx];
           const duration = DURATIONS[note.duration] || 1;
           const time = absoluteBeat + beatOffset;
+          const timeSeconds = time * beatDuration;
 
           if (note.pitch) {
             const freq = this._pitchToFrequency(note.pitch);
             if (freq) {
+              const durSeconds = duration * beatDuration;
+              const noteId = `vf-${containerId}-m${measureIdx}-v${voiceIdx}-n${noteIdx}`;
+
               // Schedule each note
               const id = Tone.Transport.schedule((t) => {
                 if (this.instrument && typeof this.instrument.triggerAttackRelease === "function") {
                   this.instrument.triggerAttackRelease(
                     freq,
-                    duration * beatDuration,
+                    durSeconds,
                     t,
                     0.7
                   );
                 }
-              }, time);
+
+                // Highlight note at t
+                Tone.Draw.schedule(() => {
+                  const noteEl = document.getElementById(noteId);
+                  if (noteEl) {
+                    noteEl.classList.add("note-highlight");
+                  }
+                }, t);
+
+                // Remove highlight note at t + durSeconds
+                Tone.Draw.schedule(() => {
+                  const noteEl = document.getElementById(noteId);
+                  if (noteEl) {
+                    noteEl.classList.remove("note-highlight");
+                  }
+                }, t + durSeconds);
+              }, timeSeconds);
               this._scheduledIds.push(id);
             }
           }
@@ -125,11 +149,12 @@ export class AudioEngine {
 
     // Set transport loop to composition length
     Tone.Transport.loop = false;
-    Tone.Transport.loopEnd = absoluteBeat;
+    Tone.Transport.loopEnd = absoluteBeat * beatDuration;
   }
 
   play() {
     if (!this.isLoaded) return;
+    this._clearAllHighlights();
     Tone.Transport.start();
     this.isPlaying = true;
   }
@@ -138,11 +163,21 @@ export class AudioEngine {
     Tone.Transport.stop();
     Tone.Transport.cancel();
     this.isPlaying = false;
+    this._clearAllHighlights();
   }
 
   pause() {
     Tone.Transport.pause();
     this.isPlaying = false;
+    this._clearAllHighlights();
+  }
+
+  _clearAllHighlights() {
+    if (typeof document !== "undefined") {
+      document.querySelectorAll(".note-highlight").forEach((el) => {
+        el.classList.remove("note-highlight");
+      });
+    }
   }
 
   // Preview a single note

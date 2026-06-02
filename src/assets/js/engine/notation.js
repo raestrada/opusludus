@@ -133,7 +133,7 @@ export class NotationRenderer {
   }
 
   // Render a single-measure preview (for the composition interface)
-  renderMeasure(composition, measureIndex = 0) {
+  renderMeasure(composition, measureIndex = 0, options = {}) {
     if (!this.isSetup) this.setup();
     if (!this.renderer || !this.context) return;
 
@@ -159,9 +159,19 @@ export class NotationRenderer {
     const voices = measure.voices || [[]];
     const voiceGroups = [];
 
-    for (const voiceNotes of voices) {
+    for (let voiceIdx = 0; voiceIdx < voices.length; voiceIdx++) {
+      const voiceNotes = voices[voiceIdx];
       const notes = [];
-      for (const n of voiceNotes) {
+      for (let noteIdx = 0; noteIdx < voiceNotes.length; noteIdx++) {
+        const n = voiceNotes[noteIdx];
+        const noteId = `${this.containerId}-m${measureIndex}-v${voiceIdx}-n${noteIdx}`;
+        const isInvalid = options.showErrors && options.invalidNoteIds && (
+          options.invalidNoteIds.includes(noteId) || 
+          options.invalidNoteIds.includes(`vf-${noteId}`)
+        );
+        const noteColor = isInvalid ? "#ff5252" : "#e8e8f0";
+        const restColor = isInvalid ? "#ff5252" : "#a0a0b8";
+
         if (n.pitch) {
           const keys = [toVFKey(n.pitch)];
           const duration = toVFDuration(n.duration || "4");
@@ -170,8 +180,9 @@ export class NotationRenderer {
             keys,
             duration,
           });
-          staveNote.setStyle({ fillStyle: "#e8e8f0", strokeStyle: "#e8e8f0" });
-          staveNote.setStemStyle({ fillStyle: "#e8e8f0", strokeStyle: "#e8e8f0" });
+          staveNote.setAttribute('id', noteId);
+          staveNote.setStyle({ fillStyle: noteColor, strokeStyle: noteColor });
+          staveNote.setStemStyle({ fillStyle: noteColor, strokeStyle: noteColor });
           if (n.accidental) {
             staveNote.addModifier(new VF.Accidental(n.accidental), 0);
           }
@@ -183,7 +194,8 @@ export class NotationRenderer {
             keys: ["b/4"],
             duration: toVFDuration(n.duration || "4") + "r",
           });
-          restNote.setStyle({ fillStyle: "#a0a0b8", strokeStyle: "#a0a0b8" });
+          restNote.setAttribute('id', noteId);
+          restNote.setStyle({ fillStyle: restColor, strokeStyle: restColor });
           notes.push(restNote);
         }
       }
@@ -210,7 +222,7 @@ export class NotationRenderer {
   }
 
   // Render the full composition across multiple staves
-  renderFull(composition, activeMeasureIndex = 0) {
+  renderFull(composition, activeMeasureIndex = 0, options = {}) {
     if (!this.isSetup) this.setup();
     if (!this.renderer || !this.context) return;
 
@@ -257,7 +269,11 @@ export class NotationRenderer {
           ctx.setStrokeStyle("#9c82ff"); // Bright purple/lavender focus outline
           ctx.setLineWidth(3); // High visibility border
           ctx.beginPath();
-          ctx.rect(currentX, staveY - 10, staveW - 5, 110); // Centered height to cover ledger lines/stems beautifully
+          ctx.rect(currentX, staveY - 10, staveW - 5, 110, {
+            fill: "none",
+            stroke: "#9c82ff",
+            "stroke-width": "3"
+          }); // Centered height to cover ledger lines/stems beautifully
           ctx.stroke();
           ctx.restore();
         }
@@ -275,9 +291,19 @@ export class NotationRenderer {
         const voices = measure.voices || [[]];
         const voiceGroups = [];
 
-        for (const voiceNotes of voices) {
+        for (let voiceIdx = 0; voiceIdx < voices.length; voiceIdx++) {
+          const voiceNotes = voices[voiceIdx];
           const notes = [];
-          for (const n of voiceNotes) {
+          for (let noteIdx = 0; noteIdx < voiceNotes.length; noteIdx++) {
+            const n = voiceNotes[noteIdx];
+            const noteId = `${this.containerId}-m${measureIdx}-v${voiceIdx}-n${noteIdx}`;
+            const isInvalid = options.showErrors && options.invalidNoteIds && (
+              options.invalidNoteIds.includes(noteId) || 
+              options.invalidNoteIds.includes(`vf-${noteId}`)
+            );
+            const noteColor = isInvalid ? "#ff5252" : "#e8e8f0";
+            const restColor = isInvalid ? "#ff5252" : "#a0a0b8";
+
             if (n.pitch) {
               const keys = [toVFKey(n.pitch)];
               const staveNote = new VF.StaveNote({
@@ -285,8 +311,9 @@ export class NotationRenderer {
                 keys,
                 duration: toVFDuration(n.duration || "4"),
               });
-              staveNote.setStyle({ fillStyle: "#e8e8f0", strokeStyle: "#e8e8f0" });
-              staveNote.setStemStyle({ fillStyle: "#e8e8f0", strokeStyle: "#e8e8f0" });
+              staveNote.setAttribute('id', noteId);
+              staveNote.setStyle({ fillStyle: noteColor, strokeStyle: noteColor });
+              staveNote.setStemStyle({ fillStyle: noteColor, strokeStyle: noteColor });
               if (n.accidental) {
                 staveNote.addModifier(new VF.Accidental(n.accidental), 0);
               }
@@ -297,7 +324,8 @@ export class NotationRenderer {
                 keys: ["b/4"],
                 duration: toVFDuration(n.duration || "4") + "r",
               });
-              restNote.setStyle({ fillStyle: "#a0a0b8", strokeStyle: "#a0a0b8" });
+              restNote.setAttribute('id', noteId);
+              restNote.setStyle({ fillStyle: restColor, strokeStyle: restColor });
               notes.push(restNote);
             }
           }

@@ -76,6 +76,7 @@ export class GameManager {
     this.currentModule = null;
     this.currentComposition = null;
     this.isInitialized = false;
+    this.usedAids = { piano: false, errors: false, suggest: false };
   }
 
   async init(containerId, moduleDefinition) {
@@ -125,9 +126,9 @@ export class GameManager {
   }
 
   // Render current composition
-  render(activeMeasureIndex = 0) {
+  render(activeMeasureIndex = 0, options = {}) {
     if (!this.notation || !this.currentComposition) return;
-    this.notation.renderFull(this.currentComposition, activeMeasureIndex);
+    this.notation.renderFull(this.currentComposition, activeMeasureIndex, options);
   }
 
   // Get total beats in a given measure
@@ -183,7 +184,8 @@ export class GameManager {
   // Play the current composition
   play() {
     if (!this.audio || !this.currentComposition) return;
-    this.audio.loadComposition(this.currentComposition);
+    const containerId = this.notation ? this.notation.containerId : "opus-staff-area";
+    this.audio.loadComposition(this.currentComposition, containerId);
     this.audio.play();
   }
 
@@ -213,8 +215,32 @@ export class GameManager {
       return { totalScore: 0, passed: false, results: [], feedback: "No composition to evaluate." };
     }
     const result = evaluateComposition(this.currentComposition, this.currentModule);
+    
+    // Calculate visual aid penalties
+    let penalty = 0;
+    if (this.usedAids) {
+      if (this.usedAids.piano) penalty += 10;
+      if (this.usedAids.errors) penalty += 20;
+      if (this.usedAids.suggest) penalty += 15;
+    }
+
+    result.baseScore = result.totalScore;
+    result.penalty = penalty;
+    result.totalScore = Math.max(0, result.baseScore - penalty);
     result.stars = getStars(result.totalScore);
+    result.passed = result.totalScore >= 50 && result.baseScore >= 50;
+    
     return result;
+  }
+
+  setAidUsed(aid) {
+    if (this.usedAids && aid in this.usedAids) {
+      this.usedAids[aid] = true;
+    }
+  }
+
+  resetAids() {
+    this.usedAids = { piano: false, errors: false, suggest: false };
   }
 
   // Submit and save progress

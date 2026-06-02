@@ -3,6 +3,7 @@ import { GameManager } from "./game/GameManager";
 import { getAudioEngine } from "./engine/audio";
 import { NotationRenderer } from "./engine/notation";
 import { loadProgress, getStreak } from "./store/progress";
+import { nameToMidi } from "./engine/theory";
 import { LESSONS } from "./store/lessons";
 
 const CONFIG = window.__OPUS_LUDUS__ || {};
@@ -21,6 +22,8 @@ let lessonRenderer = null;
 let lessonAudio = null;
 let isPlayingExample = false;
 let examplePlayTimeout = null;
+let activeLesson = null;
+let activeAids = { piano: false, errors: false, suggest: false };
 
 const VALIDATION_TRANSLATIONS = {
   "All notes must be within the staff range.": "Todas las notas deben estar dentro del rango del pentagrama.",
@@ -182,7 +185,7 @@ function tryAddNote(pitch) {
   }
 
   // Re-render with the updated measure index (ensures staff highlight is in sync) and preview note
-  gameManager.render(currentMeasureIndex);
+  renderWorkspace();
   gameManager.previewNote(pitch);
 
   updateMeasureIndicators();
@@ -292,6 +295,7 @@ function loadLesson() {
     };
   }
 
+  activeLesson = lesson;
   const t = lesson[locale] || lesson.en || lesson.es;
 
   // Populate HTML elements
@@ -358,7 +362,7 @@ function loadLesson() {
     isPlayingExample = true;
 
     // Load and play
-    lessonAudio.loadComposition(exampleComp);
+    lessonAudio.loadComposition(exampleComp, "lesson-staff-area");
     lessonAudio.play();
 
     // Reset when done
@@ -616,7 +620,7 @@ function buildMeasureNav(measureCount) {
       currentMeasureIndex = i;
       container.querySelectorAll(".measure-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      gameManager.render(currentMeasureIndex);
+      renderWorkspace();
     });
     container.appendChild(btn);
   }
@@ -693,8 +697,13 @@ async function initWorkspace() {
     comp.measures[0]?.voices[0]?.push({ pitch: avail[2] || avail[0], duration: "4" });
   }
 
+  // Reset aids state on load
+  activeAids = { piano: false, errors: false, suggest: false };
+  document.getElementById("piano-keyboard-container")?.classList.remove("aid-piano-active");
+  gameManager.resetAids();
+
   // Render initial staff
-  gameManager.render(currentMeasureIndex);
+  renderWorkspace();
 
   // Wire up staff click to select measure directly
   const staffArea = document.getElementById("opus-staff-area");
@@ -711,7 +720,7 @@ async function initWorkspace() {
       const clickedMeasureIdx = getMeasureIndexAtCoords(offsetX, offsetY, comp, staffArea.clientWidth);
       if (clickedMeasureIdx !== null) {
         currentMeasureIndex = clickedMeasureIdx;
-        gameManager.render(currentMeasureIndex);
+        renderWorkspace();
         updateMeasureIndicators();
       }
     });
@@ -727,9 +736,13 @@ async function initWorkspace() {
   document.getElementById("btn-reset")?.addEventListener("click", () => {
     if (isPlayingAudio) handleStop();
     gameManager.currentComposition = gameManager.createBlankComposition();
+    gameManager.resetAids();
+    activeAids = { piano: false, errors: false, suggest: false };
+    document.getElementById("piano-keyboard-container")?.classList.remove("aid-piano-active");
     currentMeasureIndex = 0;
-    gameManager.render(currentMeasureIndex);
+    renderWorkspace();
     updateMeasureIndicators();
+    updateTipsBar();
     showFeedback("Composición reiniciada.", "info");
   });
 
@@ -747,7 +760,7 @@ async function initWorkspace() {
     }
 
     gameManager.removeLastNote(targetMeasureIdx, 0);
-    gameManager.render(currentMeasureIndex);
+    renderWorkspace();
     updateMeasureIndicators();
     showFeedback("Última nota eliminada.", "info");
   });
@@ -759,9 +772,25 @@ async function initWorkspace() {
     if (isPlayingAudio) handleStop();
     const result = gameManager.evaluate();
     if (result.passed) {
-      showFeedback(`✅ ¡Desafío superado con éxito! ${result.stars}⭐ (${result.totalScore}%)`, "success");
+      let msg = locale === 'es' 
+        ? `✅ ¡Desafío superado! ${result.stars}⭐ (${result.totalScore}%)` 
+        : `✅ Challenge passed! ${result.stars}⭐ (${result.totalScore}%)`;
+      if (result.penalty > 0) {
+        msg += locale === 'es' 
+          ? ` (Base: ${result.baseScore}%, Ayudas: -${result.penalty}%)`
+          : ` (Base: ${result.baseScore}%, Aids: -${result.penalty}%)`;
+      }
+      showFeedback(msg, "success");
     } else {
-      showFeedback(`❌ No se cumplen todos los requisitos (${result.totalScore}%). ¡Inténtalo de nuevo!`, "error");
+      let msg = locale === 'es'
+        ? `❌ Requisitos no cumplidos o penalización alta (${result.totalScore}%)`
+        : `❌ Requirements not satisfied or high penalty (${result.totalScore}%)`;
+      if (result.penalty > 0) {
+        msg += locale === 'es'
+          ? ` (Base: ${result.baseScore}%, Ayudas: -${result.penalty}%)`
+          : ` (Base: ${result.baseScore}%, Aids: -${result.penalty}%)`;
+      }
+      showFeedback(msg, "error");
     }
   });
 
@@ -770,6 +799,173 @@ async function initWorkspace() {
     const result = gameManager.submit();
     showResultModal(result);
   });
+
+  // Wire up Objectives Modal
+  const objectivesModal = document.getElementById("objectives-modal");
+  const objectivesList = document.getElementById("objectives-modal-list");
+  const objectivesClose = document.getElementById("objectives-modal-close");
+  const hudBtnObjectives = document.getElementById("hud-btn-objectives");
+
+  if (hudBtnObjectives && objectivesModal && objectivesList && objectivesClose) {
+    hudBtnObjectives.addEventListener("click", () => {
+      if (isPlayingAudio) handleStop();
+      
+      // Populate rules
+      objectivesList.innerHTML = "";
+      if (currentModule && currentModule.challenge && currentModule.challenge.validations) {
+        currentModule.challenge.validations.forEach(val => {
+          const li = document.createElement("li");
+          const desc = val.description || val.type;
+          li.textContent = translateRule(desc, locale);
+          objectivesList.appendChild(li);
+        });
+      }
+      objectivesModal.classList.remove("hidden");
+    });
+
+    objectivesClose.addEventListener("click", () => {
+      objectivesModal.classList.add("hidden");
+    });
+  }
+
+  // Wire up Theory & Tips Modal
+  const tipsModal = document.getElementById("theory-tips-modal");
+  const tipsContent = document.getElementById("theory-tips-modal-content");
+  const tipsClose = document.getElementById("theory-tips-modal-close");
+  const hudBtnTips = document.getElementById("hud-btn-tips");
+
+  if (hudBtnTips && tipsModal && tipsContent && tipsClose) {
+    hudBtnTips.addEventListener("click", () => {
+      if (isPlayingAudio) handleStop();
+
+      // Populate content
+      tipsContent.innerHTML = "";
+      if (activeLesson) {
+        const tLesson = activeLesson[locale] || activeLesson.en || activeLesson.es;
+        
+        // 1. Intro Text
+        const introP = document.createElement("p");
+        introP.innerHTML = tLesson.intro.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        tipsContent.appendChild(introP);
+
+        // 2. Details List
+        if (tLesson.details && tLesson.details.length > 0) {
+          const detailsUl = document.createElement("ul");
+          detailsUl.className = "challenge-rules-list-large";
+          tLesson.details.forEach(detail => {
+            const li = document.createElement("li");
+            li.innerHTML = detail.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            detailsUl.appendChild(li);
+          });
+          tipsContent.appendChild(detailsUl);
+        }
+
+        // 3. Allowed Notes Badge Guide (Visual Tip!)
+        const availNotes = currentModule?.challenge?.availableNotes || [];
+        if (availNotes.length > 0) {
+          const notesDiv = document.createElement("div");
+          notesDiv.className = "allowed-notes-tip";
+          
+          const labelStrong = document.createElement("strong");
+          labelStrong.textContent = locale === 'es' ? "Notas Permitidas en el Pentagrama:" : "Allowed Notes on the Staff:";
+          notesDiv.appendChild(labelStrong);
+
+          const badgesList = document.createElement("div");
+          badgesList.className = "notes-badges-list";
+          
+          availNotes.forEach(note => {
+            const badge = document.createElement("span");
+            badge.className = "note-badge";
+            badge.textContent = note.replace("b", "♭").replace("#", "♯");
+            badgesList.appendChild(badge);
+          });
+          
+          notesDiv.appendChild(badgesList);
+          tipsContent.appendChild(notesDiv);
+        }
+      }
+      
+      tipsModal.classList.remove("hidden");
+    });
+
+    tipsClose.addEventListener("click", () => {
+      tipsModal.classList.add("hidden");
+    });
+  }
+
+  // Wire up Visual Aids Modal
+  const aidsModal = document.getElementById("visual-aids-modal");
+  const aidsClose = document.getElementById("visual-aids-modal-close");
+  const hudBtnAids = document.getElementById("hud-btn-aids");
+
+  const btnTogglePiano = document.getElementById("btn-toggle-aid-piano");
+  const btnToggleErrors = document.getElementById("btn-toggle-aid-errors");
+  const btnToggleSuggest = document.getElementById("btn-toggle-aid-suggest");
+
+  if (hudBtnAids && aidsModal && aidsClose) {
+    hudBtnAids.addEventListener("click", () => {
+      if (isPlayingAudio) handleStop();
+      
+      updateAidButtonState(btnTogglePiano, activeAids.piano);
+      updateAidButtonState(btnToggleErrors, activeAids.errors);
+      updateAidButtonState(btnToggleSuggest, activeAids.suggest);
+
+      aidsModal.classList.remove("hidden");
+    });
+
+    aidsClose.addEventListener("click", () => {
+      aidsModal.classList.add("hidden");
+    });
+  }
+
+  function updateAidButtonState(btn, isActive) {
+    if (!btn) return;
+    if (isActive) {
+      btn.textContent = locale === 'es' ? "Desactivar" : "Deactivate";
+      btn.classList.add("btn-toggle-active");
+    } else {
+      btn.textContent = locale === 'es' ? "Activar" : "Activate";
+      btn.classList.remove("btn-toggle-active");
+    }
+  }
+
+  if (btnTogglePiano) {
+    btnTogglePiano.addEventListener("click", () => {
+      activeAids.piano = !activeAids.piano;
+      if (activeAids.piano) {
+        gameManager.setAidUsed("piano");
+        document.getElementById("piano-keyboard-container")?.classList.add("aid-piano-active");
+      } else {
+        document.getElementById("piano-keyboard-container")?.classList.remove("aid-piano-active");
+      }
+      updateAidButtonState(btnTogglePiano, activeAids.piano);
+      showFeedback(locale === 'es' ? "Piano iluminado activado (Penalización -10% puntos)." : "Piano highlighting activated (-10% points penalty).", "info");
+    });
+  }
+
+  if (btnToggleErrors) {
+    btnToggleErrors.addEventListener("click", () => {
+      activeAids.errors = !activeAids.errors;
+      if (activeAids.errors) {
+        gameManager.setAidUsed("errors");
+      }
+      updateAidButtonState(btnToggleErrors, activeAids.errors);
+      renderWorkspace();
+      showFeedback(locale === 'es' ? "Resaltado de errores activado (Penalización -20% puntos)." : "Error highlighting activated (-20% points penalty).", "info");
+    });
+  }
+
+  if (btnToggleSuggest) {
+    btnToggleSuggest.addEventListener("click", () => {
+      activeAids.suggest = !activeAids.suggest;
+      if (activeAids.suggest) {
+        gameManager.setAidUsed("suggest");
+      }
+      updateAidButtonState(btnToggleSuggest, activeAids.suggest);
+      updateTipsBar();
+      showFeedback(locale === 'es' ? "Sugerencia de nota activa (Penalización -15% puntos)." : "Note suggestion activated (-15% points penalty).", "info");
+    });
+  }
 }
 
 // Show results popup modal
@@ -808,6 +1004,21 @@ function showResultModal(submitResult) {
   if (scoreVal) scoreVal.textContent = `${score}%`;
   if (xpVal) xpVal.textContent = `+${xpEarned} XP`;
 
+  // Score Penalty breakdown display
+  const breakdownArea = document.getElementById("score-breakdown-area");
+  const baseScoreSpan = document.getElementById("breakdown-base-score");
+  const penaltySpan = document.getElementById("breakdown-penalty");
+  
+  if (breakdownArea && baseScoreSpan && penaltySpan) {
+    if (submitResult.penalty > 0) {
+      breakdownArea.style.display = "flex";
+      baseScoreSpan.textContent = `Base: ${submitResult.baseScore}%`;
+      penaltySpan.textContent = locale === 'es' ? `Ayudas: -${submitResult.penalty}%` : `Aids: -${submitResult.penalty}%`;
+    } else {
+      breakdownArea.style.display = "none";
+    }
+  }
+
   // Streak
   const streak = getStreak();
   const streakContainer = document.getElementById("result-streak-container");
@@ -841,8 +1052,12 @@ function showResultModal(submitResult) {
       modal.classList.add("hidden");
       currentMeasureIndex = 0;
       gameManager.currentComposition = gameManager.createBlankComposition();
-      gameManager.render(currentMeasureIndex);
+      gameManager.resetAids();
+      activeAids = { piano: false, errors: false, suggest: false };
+      document.getElementById("piano-keyboard-container")?.classList.remove("aid-piano-active");
+      renderWorkspace();
       updateMeasureIndicators();
+      updateTipsBar();
       showFeedback("Composición reiniciada.", "info");
     };
   }
@@ -889,3 +1104,135 @@ window.addEventListener("beforeunload", () => {
     }
   }
 });
+
+// Visual Aids Helper Functions
+function renderWorkspace() {
+  if (!gameManager) return;
+  const invalidNoteIds = getInvalidNoteIds(gameManager.currentComposition, currentModule);
+  const options = {
+    showErrors: activeAids.errors,
+    invalidNoteIds: invalidNoteIds
+  };
+  
+  gameManager.render(currentMeasureIndex, options);
+  
+  // Highlight invalid notes in red in the DOM (for bounce and glow effects)
+  document.querySelectorAll(".note-error").forEach(el => el.classList.remove("note-error"));
+  if (activeAids.errors && invalidNoteIds) {
+    invalidNoteIds.forEach(id => {
+      const el = document.getElementById(id) || document.getElementById(`vf-${id}`);
+      if (el) el.classList.add("note-error");
+    });
+  }
+  updateTipsBar();
+}
+
+function getInvalidNoteIds(composition, moduleDef) {
+  if (!composition || !moduleDef) return [];
+  const invalidIds = [];
+  const containerId = "opus-staff-area";
+  const available = moduleDef.challenge?.availableNotes || [];
+  
+  // 1. Notes not in availableNotes
+  const measures = composition.measures || [];
+  for (let mIdx = 0; mIdx < measures.length; mIdx++) {
+    const measure = measures[mIdx];
+    const voices = measure.voices || [[]];
+    for (let vIdx = 0; vIdx < voices.length; vIdx++) {
+      const voice = voices[vIdx];
+      for (let nIdx = 0; nIdx < voice.length; nIdx++) {
+        const note = voice[nIdx];
+        if (note.pitch) {
+          const isAllowed = available.length === 0 || available.includes(note.pitch);
+          if (!isAllowed) {
+            invalidIds.push(`${containerId}-m${mIdx}-v${vIdx}-n${nIdx}`);
+          }
+        }
+      }
+    }
+  }
+  
+  // 2. Parallel fifths/octaves check (if voiceleading rule is active)
+  const hasVoiceLeading = moduleDef.challenge?.validations?.some(val => val.type === "voiceLeading" || val.type === "fourPartTexture");
+  if (hasVoiceLeading && measures.length > 1) {
+    for (let m = 0; m < measures.length - 1; m++) {
+      const m1 = measures[m];
+      const m2 = measures[m+1];
+      if (m1.voices?.length >= 2 && m2.voices?.length >= 2) {
+        const note1a = m1.voices[0]?.[0];
+        const note1b = m1.voices[1]?.[0];
+        const note2a = m2.voices[0]?.[0];
+        const note2b = m2.voices[1]?.[0];
+        
+        if (note1a?.pitch && note1b?.pitch && note2a?.pitch && note2b?.pitch) {
+          const midi1a = nameToMidi(note1a.pitch);
+          const midi1b = nameToMidi(note1b.pitch);
+          const midi2a = nameToMidi(note2a.pitch);
+          const midi2b = nameToMidi(note2b.pitch);
+          
+          if (midi1a !== null && midi1b !== null && midi2a !== null && midi2b !== null) {
+            const iv1 = Math.abs(midi1a - midi1b) % 12;
+            const iv2 = Math.abs(midi2a - midi2b) % 12;
+            if ((iv1 === 7 || iv1 === 0) && iv1 === iv2) {
+              if (midi1a !== midi2a || midi1b !== midi2b) {
+                invalidIds.push(`${containerId}-m${m}-v0-n0`);
+                invalidIds.push(`${containerId}-m${m}-v1-n0`);
+                invalidIds.push(`${containerId}-m${m+1}-v0-n0`);
+                invalidIds.push(`${containerId}-m${m+1}-v1-n0`);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return invalidIds;
+}
+
+function getNextNoteSuggestion() {
+  if (!currentModule || !gameManager) return "";
+  const available = currentModule.challenge?.availableNotes || [];
+  if (available.length === 0) return locale === 'es' ? "Cualquier nota" : "Any note";
+  
+  const comp = gameManager.currentComposition;
+  if (!comp) return available[0];
+  const activeMeasure = comp.measures[currentMeasureIndex];
+  const voice = activeMeasure?.voices?.[0] || [];
+  const notesWithPitch = voice.filter(n => n.pitch);
+  
+  if (notesWithPitch.length === 0) {
+    return available[0];
+  } else {
+    const lastNote = notesWithPitch[notesWithPitch.length - 1];
+    const lastMidi = nameToMidi(lastNote.pitch);
+    if (lastMidi === null) return available[0];
+    
+    const consonantNotes = available.filter(name => {
+      const midi = nameToMidi(name);
+      if (midi === null || midi === lastMidi) return false;
+      const diff = Math.abs(midi - lastMidi);
+      return [1, 2, 3, 4, 5, 7, 12].includes(diff);
+    });
+    
+    if (consonantNotes.length > 0) {
+      return consonantNotes.slice(0, 2).map(n => n.replace("b", "♭").replace("#", "♯")).join(" o ");
+    }
+    return available[0].replace("b", "♭").replace("#", "♯");
+  }
+}
+
+function updateTipsBar() {
+  const tipEl = document.getElementById("hud-tip-text");
+  if (!tipEl || !currentModule) return;
+  
+  if (activeAids.suggest) {
+    const suggestion = getNextNoteSuggestion();
+    tipEl.innerHTML = locale === 'es' 
+      ? `💡 <strong style="color: #f0c040;">Sugerencia de Ayuda:</strong> Intenta colocar la nota <strong>${suggestion}</strong> en el compás activo.`
+      : `💡 <strong style="color: #f0c040;">Aid Suggestion:</strong> Try placing note <strong>${suggestion}</strong> in the active measure.`;
+  } else {
+    const tips = currentModule.tips[locale] || currentModule.tips.en || [];
+    tipEl.textContent = tips.length > 0 ? `💡 ${tips[0]}` : "";
+  }
+}
