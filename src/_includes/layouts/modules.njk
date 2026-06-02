@@ -66,14 +66,14 @@ layout: layouts/base.njk
   </div>
   <div class="module-grid">
     {% for mod in levelModules %}
-    <div class="module-card" data-module-id="{{ mod.id }}" data-module-order="{{ mod.order }}" style="--level-bg-url: url('/opusludus/assets/images/level{{ level }}_bg.png');">
+    <div class="module-card" data-module-id="{{ mod.id }}" data-module-order="{{ mod.order }}" style="--level-bg-url: url('{{ pathPrefix }}/assets/images/level{{ level }}_bg.png');">
       <span class="module-order">#{{ mod.order }}</span>
       <h3 class="module-name">{{ mod.name[locale] | default(mod.name.en) }}</h3>
       <p class="module-desc">{{ mod.description[locale] | default(mod.description.en) }}</p>
       <div class="module-footer">
         <span class="module-xp">🎵 {{ mod.xpBase }} XP</span>
         <span class="module-stars" id="stars-{{ mod.id }}"></span>
-        <a href="/opusludus/{{ locale }}/play/?module={{ mod.id }}" class="module-action">
+        <a href="{{ pathPrefix }}/{{ locale }}/play/?module={{ mod.id }}" class="module-action">
           ▶ {{ modules.play }}
         </a>
       </div>

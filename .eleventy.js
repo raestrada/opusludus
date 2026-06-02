@@ -40,9 +40,14 @@ module.exports = function (eleventyConfig) {
   });
 
 
+  // Determine path prefix dynamically
+  const isProduction = process.env.NODE_ENV === "production";
+  const prefix = isProduction ? "/opusludus" : "";
+  eleventyConfig.addGlobalData("pathPrefix", prefix);
+
   // Shortcode for the game bundle script tag
   eleventyConfig.addShortcode("gameBundle", function () {
-    return '<script src="/opusludus/assets/js/bundle.js"></script>';
+    return `<script src="${prefix}/assets/js/bundle.js"></script>`;
   });
 
   return {
@@ -55,6 +60,6 @@ module.exports = function (eleventyConfig) {
     templateFormats: ["njk", "md", "html"],
     htmlTemplateEngine: "njk",
     markdownTemplateEngine: "njk",
-    pathPrefix: "/opusludus/",
+    pathPrefix: isProduction ? "/opusludus/" : "/",
   };
 };

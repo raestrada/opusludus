@@ -8,8 +8,8 @@
     "dev:webpack": "webpack --mode development --watch",
     "dev": "npm run dev:webpack & npm run dev:eleventy",
     "build:webpack": "webpack --mode production",
-    "build:eleventy": "eleventy",
-    "build": "npm run build:webpack && npm run build:eleventy",
+    "build:eleventy": "NODE_ENV=production eleventy",
+    "build": "NODE_ENV=production npm run build:webpack && npm run build:eleventy",
     "clean": "rm -rf public/ dist/"
   },
   "devDependencies": {

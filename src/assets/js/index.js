@@ -243,7 +243,7 @@ function loadLesson() {
   // Apply dynamic background image of the module's level
   const playPageEl = document.querySelector(".play-page");
   if (playPageEl) {
-    playPageEl.style.setProperty("--play-bg-url", `url('/opusludus/assets/images/level${currentModule.level || 1}_bg.png')`);
+    playPageEl.style.setProperty("--play-bg-url", `url('${CONFIG.pathPrefix || ""}/assets/images/level${currentModule.level || 1}_bg.png')`);
   }
 
   // Look up custom lesson or generate fallback
@@ -1044,7 +1044,7 @@ function showResultModal(submitResult) {
     if (nextId && submitResult.passed) {
       nextBtn.style.display = "inline-flex";
       nextBtn.onclick = () => {
-        window.location.href = `/opusludus/${locale}/play/?module=${nextId}`;
+        window.location.href = `${CONFIG.baseUrl || '/' + locale + '/'}play/?module=${nextId}`;
       };
     } else {
       nextBtn.style.display = "none";
@@ -1072,7 +1072,7 @@ function showResultModal(submitResult) {
   const menuBtn = document.getElementById("result-btn-menu");
   if (menuBtn) {
     menuBtn.onclick = () => {
-      window.location.href = `/opusludus/${locale}/modules/`;
+      window.location.href = `${CONFIG.baseUrl || '/' + locale + '/'}modules/`;
     };
   }
 
