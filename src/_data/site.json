@@ -1,0 +1,14 @@
+{
+  "name": "Opus Ludus",
+  "tagline": {
+    "en": "Learn composition. Forge masterpieces. Become the composer you were born to be.",
+    "es": "Aprende a componer. Forja obras maestras. Conviértete en el compositor que llevas dentro."
+  },
+  "description": {
+    "en": "An interactive, gamified platform to learn music composition — from fundamentals to advanced techniques. Conservatory-ordered curriculum with a game-like experience.",
+    "es": "Una plataforma interactiva y gamificada para aprender composición musical — desde fundamentos hasta técnicas avanzadas. Currículo ordenado por conservatorio con experiencia de juego."
+  },
+  "locales": ["en", "es"],
+  "defaultLocale": "es",
+  "author": "Opus Ludus"
+}

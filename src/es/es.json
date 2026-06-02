@@ -1,0 +1,53 @@
+{
+  "locale": "es",
+  "lang": "Español",
+  "dir": "ltr",
+  "nav": {
+    "home": "Inicio",
+    "modules": "Módulos",
+    "play": "Jugar",
+    "about": "Acerca de"
+  },
+  "home": {
+    "title": "Opus Ludus",
+    "subtitle": "Aprende a componer. Forja obras maestras.",
+    "cta": "Comienza tu viaje",
+    "features": {
+      "learn": {
+        "title": "Aprende",
+        "text": "39 módulos interactivos ordenados por currículo de conservatorio — de las notas a la composición avanzada."
+      },
+      "compose": {
+        "title": "Compone",
+        "text": "Escribe música en un pentagrama real con nuestro motor de notación. Arrastra, haz clic y escucha tu creación."
+      },
+      "levelup": {
+        "title": "Sube de nivel",
+        "text": "Gana XP, estrellas e insignias a medida que progresas. Desbloquea módulos y escala rangos hasta Virtuoso."
+      }
+    }
+  },
+  "modules": {
+    "title": "Currículo",
+    "subtitle": "Tu camino de novato a virtuoso",
+    "levels": {
+      "1": "Fundamentos",
+      "2": "Armonía Básica",
+      "3": "Contrapunto",
+      "4": "Formas Musicales",
+      "5": "Armonía Avanzada",
+      "6": "Orquestación y Estilos",
+      "7": "Composición Avanzada"
+    },
+    "play": "Jugar módulo",
+    "locked": "Completa el módulo anterior para desbloquear",
+    "stars": "estrellas"
+  },
+  "play": {
+    "loading": "Cargando Opus Ludus...",
+    "back": "Volver a Módulos"
+  },
+  "footer": {
+    "text": "Opus Ludus — Aprende composición jugando."
+  }
+}

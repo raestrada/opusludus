@@ -1,0 +1,215 @@
+---
+layout: layouts/base.njk
+title: Opus Ludus
+---
+
+<script>
+  document.documentElement.classList.add('play-page-active');
+  document.body.classList.add('play-page-active');
+</script>
+
+<div class="play-page">
+  <div class="game-container" id="game-container">
+    
+    <!-- 1. LESSON VIEW (VISIBLE BY DEFAULT) -->
+    <div class="lesson-view" id="lesson-view">
+      <div class="lesson-header">
+        <span class="lesson-badge">Lección Teórica</span>
+        <h1 id="lesson-title" class="lesson-main-title">Cargando Lección...</h1>
+      </div>
+      
+      <div class="lesson-body">
+        <!-- Left: Explanations -->
+        <div class="lesson-text-panel">
+          <p id="lesson-intro" class="lesson-intro-text">Cargando teoría del conservatorio...</p>
+          <ul id="lesson-details-list" class="lesson-details-list">
+            <!-- Bullet points -->
+          </ul>
+          <button class="btn btn-success btn-large" id="lesson-btn-start">
+            {% if locale == 'es' %}Siguiente{% else %}Next{% endif %} <span class="icon">➔</span>
+          </button>
+        </div>
+        
+        <!-- Right: Interactive Notation Example -->
+        <div class="lesson-example-panel">
+          <h3 id="lesson-example-title">Ejemplo Musical</h3>
+          <div class="lesson-staff-wrapper">
+            <div id="lesson-staff-area"></div>
+          </div>
+          <p id="lesson-example-desc" class="lesson-example-desc">...</p>
+          <div class="lesson-example-controls">
+            <button class="btn btn-secondary" id="lesson-btn-play-example">
+              <span class="icon">▶</span> Escuchar Ejemplo
+            </button>
+            <button class="btn btn-stop" id="lesson-btn-stop-example" style="display:none;">
+              <span class="icon">■</span> Detener
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. CHALLENGE OVERVIEW VIEW (HIDDEN BY DEFAULT) -->
+    <div class="challenge-view hidden" id="challenge-view">
+      <div class="challenge-view-header">
+        <span class="challenge-badge">{% if locale == 'es' %}Desafío de Composición{% else %}Composition Challenge{% endif %}</span>
+        <h1 id="challenge-title-text" class="challenge-main-title">Cargando Objetivo...</h1>
+      </div>
+      
+      <div class="challenge-view-body">
+        <div class="challenge-info-card">
+          <div class="challenge-icon-large">🎯</div>
+          <div class="challenge-text-content">
+            <h3>{% if locale == 'es' %}Objetivo Principal{% else %}Main Goal{% endif %}</h3>
+            <p>{% if locale == 'es' %}Escribe tu composición en el pentagrama interactivo cumpliendo los siguientes requisitos pedagógicos:{% else %}Compose your piece on the interactive staff satisfying the following pedagogical requirements:{% endif %}</p>
+          </div>
+        </div>
+
+        <div class="challenge-rules-container">
+          <h3>{% if locale == 'es' %}Requisitos de Evaluación{% else %}Evaluation Requirements{% endif %}</h3>
+          <ul id="play-challenge-rules" class="challenge-rules-list-large">
+            <!-- Populated dynamically -->
+          </ul>
+        </div>
+
+        <div class="challenge-actions">
+          <button class="btn btn-secondary" id="challenge-btn-back">
+            {% if locale == 'es' %}← Volver a la Teoría{% else %}← Back to Theory{% endif %}
+          </button>
+          <button class="btn btn-success btn-large" id="challenge-btn-start">
+            {% if locale == 'es' %}¡A Jugar!{% else %}Play!{% endif %} <span class="icon">➔</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. GAME PLAY VIEW (HIDDEN BY DEFAULT) -->
+    <div class="game-workspace hidden" id="game-workspace">
+      <!-- Game HUD -->
+      <div class="game-hud">
+        <div class="hud-left">
+          <a href="/{{ locale }}/modules/" class="hud-back-btn">← {{ play.back | default("Volver a Módulos") }}</a>
+          <h2 id="hud-module-title" class="hud-title">Cargando módulo...</h2>
+        </div>
+        <div class="hud-right">
+          <span class="hud-stat xp"><span class="icon">🎵</span> <span id="hud-xp-value">0</span> XP</span>
+          <span class="hud-stat streak" id="hud-streak-container" style="display:none;"><span class="icon">🔥</span> <span id="hud-streak-value">0</span></span>
+        </div>
+      </div>
+      
+      <!-- Tips / Module Instruction -->
+      <div class="hud-tips-bar">
+        <p id="hud-tip-text" class="tip-text">Cargando...</p>
+      </div>
+
+      <!-- Game Board -->
+      <div class="game-board">
+        
+        <!-- Staff Score Section -->
+        <div class="staff-section">
+          <div id="opus-staff-area"></div>
+          
+          <!-- Measure Navigation -->
+          <div class="measure-nav" id="measure-nav-container">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+          
+          <div class="palettes-row">
+            <!-- Durations -->
+            <div class="palette-group flex-1">
+              <span class="group-label">Duración</span>
+              <div class="duration-palette" id="duration-palette-container">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="palette-group flex-2">
+              <span class="group-label">Notas permitidas</span>
+              <div class="note-palette" id="note-palette-container">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Keyboard -->
+          <div class="palette-group">
+            <span class="group-label">Teclado de Piano</span>
+            <div class="piano-keyboard-wrapper">
+              <div class="piano-keyboard" id="piano-keyboard-container">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Transport Buttons -->
+          <div class="transport-controls">
+            <button class="btn btn-secondary" id="btn-reset" title="Reiniciar">
+              <span class="icon">↺</span> Reiniciar
+            </button>
+            <button class="btn btn-secondary" id="btn-undo" title="Deshacer">
+              <span class="icon">↩</span> Deshacer
+            </button>
+            <button class="btn btn-play" id="btn-play" title="Reproducir">
+              <span class="icon">▶</span> Reproducir
+            </button>
+            <button class="btn btn-stop" id="btn-stop" title="Detener" style="display: none;">
+              <span class="icon">■</span> Detener
+            </button>
+            <button class="btn btn-warn" id="btn-evaluate">
+              Evaluar desafío
+            </button>
+            <button class="btn btn-success" id="btn-submit">
+              ✓ Guardar y Terminar
+            </button>
+          </div>
+
+          <!-- Feedback Messages -->
+          <div class="feedback-area" id="feedback-message-container"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Modal (Hidden by default) -->
+    <div class="result-overlay hidden" id="result-modal">
+      <div class="result-content">
+        <h1 id="result-title">¡Buen trabajo!</h1>
+        <p id="result-subtitle">El pentagrama, claves y notas</p>
+        
+        <!-- Stars Container -->
+        <div class="result-stars" id="result-stars-container">
+          <!-- ⭐⭐⭐ -->
+        </div>
+
+        <div class="result-score" id="result-score-value">95%</div>
+        <div class="result-xp-earned" id="result-xp-value">+50 XP</div>
+        
+        <div class="result-streak" id="result-streak-container" style="display:none;">
+          🔥 <span id="result-streak-value">0</span> días seguidos!
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-secondary" id="result-btn-retry">Reintentar</button>
+          <button class="btn btn-success" id="result-btn-next" style="display:none;">Siguiente</button>
+        </div>
+
+        <button class="btn-link" id="result-btn-menu">← Volver al menú</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  window.__OPUS_LUDUS__ = {
+    locale: "{{ locale }}",
+    baseUrl: "/{{ locale }}/",
+    curriculum: {{ curriculum.modules | dump | safe }}
+  };
+</script>
+{% gameBundle %}

@@ -1,0 +1,74 @@
+---
+layout: layouts/base.njk
+title: Opus Ludus — Aprende Composición Clásica
+---
+
+<section class="hero-section">
+  <div class="hero-card">
+    <div class="hero-badge">🎼 CONSERVATORIO DIDÁCTICO</div>
+    <h1 class="hero-title">Opus Ludus</h1>
+    <p class="hero-subtitle">
+      {% if locale == 'es' %}
+      El arte de la composición clásica, gamificado. Escribe música real en el pentagrama, domina la armonía y forja obras maestras.
+      {% else %}
+      The art of classical composition, gamified. Write real music on the staff, master harmony, and forge masterpieces.
+      {% endif %}
+    </p>
+    <div class="hero-buttons">
+      <a href="/{{ locale }}/modules/" class="btn-primary-glow">{{ home.cta }}</a>
+      <a href="#about-section" class="btn-secondary-glow">
+        {% if locale == 'es' %}Ver más información{% else %}More info{% endif %}
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Grid -->
+<section class="stats-overview">
+  <div class="stat-box">
+    <span class="stat-num">7</span>
+    <span class="stat-lbl">{% if locale == 'es' %}Niveles Teóricos{% else %}Theoretical Levels{% endif %}</span>
+  </div>
+  <div class="stat-box">
+    <span class="stat-num">39</span>
+    <span class="stat-lbl">{% if locale == 'es' %}Módulos Interactivos{% else %}Interactive Modules{% endif %}</span>
+  </div>
+  <div class="stat-box">
+    <span class="stat-num">MIDI</span>
+    <span class="stat-lbl">{% if locale == 'es' %}Exportación Real{% else %}Real MIDI Export{% endif %}</span>
+  </div>
+</section>
+
+<section id="about-section" class="features">
+  <div class="feature-card">
+    <div class="feature-icon">📚</div>
+    <h3>{{ home.features.learn.title }}</h3>
+    <p>{{ home.features.learn.text }}</p>
+    <span class="card-accent"></span>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">✍️</div>
+    <h3>{{ home.features.compose.title }}</h3>
+    <p>{{ home.features.compose.text }}</p>
+    <span class="card-accent"></span>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">⚡</div>
+    <h3>{{ home.features.levelup.title }}</h3>
+    <p>{{ home.features.levelup.text }}</p>
+    <span class="card-accent"></span>
+  </div>
+</section>
+
+<!-- Methodology Callout -->
+<section class="info-callout">
+  <div class="callout-content">
+    {% if locale == 'es' %}
+    <h2>Metodología de Conservatorio Real</h2>
+    <p>Opus Ludus sigue una trayectoria pedagógica progresiva desde los conceptos básicos de clave y lectura hasta técnicas avanzadas del siglo XX como el serialismo y el minimalismo. Cada módulo valida reglas armónicas, contrapunto y estructura rítmica en tiempo real.</p>
+    {% else %}
+    <h2>Real Conservatoire Methodology</h2>
+    <p>Opus Ludus follows a progressive pedagogical path from basic clef reading to advanced 20th-century techniques like serialism and minimalism. Each module validates harmonic rules, counterpoint, and rhythmic structures in real time.</p>
+    {% endif %}
+  </div>
+</section>

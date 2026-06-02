@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ site.description | t(locale) }}">
+  <title>{% block title %}Opus Ludus{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="site-wrapper">
+    <header class="site-header">
+      <a href="/{{ locale }}/" class="site-logo">
+        <span class="icon">🎼</span>
+        Opus Ludus
+      </a>
+      <nav class="site-nav">
+        <a href="/{{ locale }}/" {% if slug == '' %}class="active"{% endif %}>{{ nav.home }}</a>
+        <a href="/{{ locale }}/modules/" {% if slug == 'modules/' %}class="active"{% endif %}>{{ nav.modules }}</a>
+        <span class="lang-switcher">
+          {% for loc in site.locales %}
+          <a href="/{{ loc }}/{{ slug }}" {% if loc == locale %}class="active"{% endif %}>{{ loc }}</a>
+          {% endfor %}
+        </span>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      {{ content | safe }}
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <span class="footer-logo">🎼 Opus Ludus</span>
+          {% if locale == 'es' %}
+          <p class="footer-desc">El arte de la composición clásica, gamificado. Diseñado para jóvenes músicos del conservatorio y academias de música.</p>
+          {% else %}
+          <p class="footer-desc">The art of classical composition, gamified. Designed for young conservatory musicians and music academy students.</p>
+          {% endif %}
+        </div>
+        
+        <div class="footer-links-group">
+          {% if locale == 'es' %}
+          <h4>Enlaces Rápidos</h4>
+          <a href="/es/">Inicio</a>
+          <a href="/es/modules/">Módulos del Currículo</a>
+          {% else %}
+          <h4>Quick Links</h4>
+          <a href="/en/">Home</a>
+          <a href="/en/modules/">Curriculum Modules</a>
+          {% endif %}
+        </div>
+
+        <div class="footer-credits">
+          {% if locale == 'es' %}
+          <h4>Agradecimientos</h4>
+          <p>Con especial dedicatoria a los jóvenes estudiantes del conservatorio y academias de música.</p>
+          {% else %}
+          <h4>Credits</h4>
+          <p>Specially dedicated to young conservatory students and music academies.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Opus Ludus. {% if locale == 'es' %}Creado con 💛 para jóvenes virtuosos.{% else %}Created with 💛 for young virtuosos.{% endif %}</p>
+      </div>
+    </footer>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "locale": "en",
+  "lang": "English",
+  "dir": "ltr",
+  "nav": {
+    "home": "Home",
+    "modules": "Modules",
+    "play": "Play",
+    "about": "About"
+  },
+  "home": {
+    "title": "Opus Ludus",
+    "subtitle": "Learn composition. Forge masterpieces.",
+    "cta": "Start Your Journey",
+    "features": {
+      "learn": {
+        "title": "Learn",
+        "text": "39 interactive modules ordered by conservatory curriculum — from notes to advanced composition."
+      },
+      "compose": {
+        "title": "Compose",
+        "text": "Write music on a real staff with our built-in notation engine. Drag, click, and hear your creation."
+      },
+      "levelup": {
+        "title": "Level Up",
+        "text": "Earn XP, stars, and badges as you progress. Unlock new modules and climb the ranks to Virtuoso."
+      }
+    }
+  },
+  "modules": {
+    "title": "Curriculum",
+    "subtitle": "Your path from novice to virtuoso",
+    "levels": {
+      "1": "Fundamentals",
+      "2": "Basic Harmony",
+      "3": "Counterpoint",
+      "4": "Musical Forms",
+      "5": "Advanced Harmony",
+      "6": "Orchestration & Styles",
+      "7": "Advanced Composition"
+    },
+    "play": "Play Module",
+    "locked": "Complete previous module to unlock",
+    "stars": "stars"
+  },
+  "play": {
+    "loading": "Loading Opus Ludus...",
+    "back": "Back to Modules"
+  },
+  "footer": {
+    "text": "Opus Ludus — Learn composition through play."
+  }
+}
