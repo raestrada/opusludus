@@ -1621,45 +1621,6 @@ body.play-page-active {
   overflow: hidden;
 }
 
-/* ---- Analysis page viewport lock ---- */
-html.analysis-page-active,
-body.analysis-page-active {
-  height: 100vh !important;
-  max-height: 100vh !important;
-  overflow: hidden !important;
-}
-
-.analysis-page-active .site-wrapper {
-  height: 100vh !important;
-  max-height: 100vh !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.analysis-page-active .site-footer {
-  display: none !important;
-}
-
-.analysis-page-active .site-header {
-  padding: 0.4rem 1.5rem !important;
-  flex-shrink: 0;
-}
-
-.analysis-page-active .site-logo {
-  font-size: 1.2rem !important;
-}
-
-.analysis-page-active .main-content {
-  padding: 0.5rem 1rem !important;
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  height: auto !important;
-  overflow: hidden !important;
-  max-width: 100% !important;
-}
-
 .game-container {
   width: 100%;
   height: 100%;
@@ -2277,28 +2238,26 @@ body.analysis-page-active {
    ========================================================================== */
 .analysis-page {
   width: 100%;
-  height: 100%;
+  min-height: calc(100vh - 60px);
   background-image: linear-gradient(135deg, rgba(10, 10, 26, 0.94), rgba(16, 16, 38, 0.96)), var(--analysis-bg-url);
   background-size: cover;
   background-position: center;
-  padding: 0;
+  background-attachment: fixed;
+  padding: 2rem 1.5rem;
   display: flex;
   justify-content: center;
-  overflow: hidden;
 }
 
 .analysis-container {
   width: 1200px;
   max-width: 100%;
-  height: 100%;
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 1.5rem;
-  align-items: stretch;
-  padding: 1rem 1.5rem;
+  align-items: start;
 }
 
-/* Sidebar — sticky, independently scrollable */
+/* Sidebar — sticky so catalog is always accessible when scrolling */
 .analysis-sidebar {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2306,9 +2265,11 @@ body.analysis-page-active {
   padding: 1.5rem;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 140px);
   display: flex;
   flex-direction: column;
-  max-height: 100%;
   overflow: hidden;
 }
 
@@ -2387,22 +2348,16 @@ body.analysis-page-active {
 .difficulty-badge.medium { background: rgba(241, 196, 15, 0.1) !important; color: #f1c40f !important; border-color: rgba(241, 196, 15, 0.2) !important; }
 .difficulty-badge.hard { background: rgba(231, 76, 60, 0.1) !important; color: #e74c3c !important; border-color: rgba(231, 76, 60, 0.2) !important; }
 
-/* Workstation — fills grid cell, delegates scroll to card */
+/* Workstation — natural flow, no internal scroll */
 .analysis-workstation {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  /* scroll is handled by the page body */
 }
 
-/* Workstation Card — fills workstation, scrolls internally */
+/* Workstation Card */
 .workstation-card {
   width: 100%;
   border-radius: 12px;
   padding: 1.5rem;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  box-sizing: border-box;
 }
 
 /* Empty State */
@@ -2465,7 +2420,7 @@ body.analysis-page-active {
   padding: 1rem;
   margin-bottom: 1.5rem;
   position: sticky;
-  top: 0;
+  top: 70px;
   z-index: 10;
 }
 
@@ -2615,29 +2570,14 @@ body.analysis-page-active {
     grid-template-columns: 1fr;
   }
 
-  .analysis-page {
-    overflow-y: auto;
-  }
-
   .analysis-sidebar {
-    max-height: 40vh;
     position: static;
-  }
-
-  .analysis-workstation {
-    display: block;
-    min-height: auto;
-  }
-
-  .workstation-card {
-    overflow-y: visible;
-    flex: none;
-    min-height: auto;
+    max-height: 40vh;
   }
 
   .staff-section {
     position: sticky;
-    top: 0;
+    top: 60px;
   }
 }
 
