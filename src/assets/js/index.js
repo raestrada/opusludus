@@ -1261,6 +1261,38 @@ function initAnalysisPage() {
           hint = locale === 'es'
             ? "Pista: La melodía clásica debe resolver en la dominante (A4) al final del compás 4 en lugar del Sol (G4) actual."
             : "Hint: The classical melody must resolve on the dominant (A4) at the end of measure 4 instead of the current G4.";
+        } else if (activeChallenge.id === "pachelbel-canon") {
+          hint = locale === 'es'
+            ? "Pista: El bajo ostinato del Canon en Re sigue el patrón Re-La-Si-Fa#-Sol-Re-Sol-La. En el compás 1, la cuarta nota (Mi3) debe ser Fa#3."
+            : "Hint: The ground bass of Canon in D follows D-A-B-F#-G-D-G-A. In measure 1, the fourth note (E3) should be F#3.";
+        } else if (activeChallenge.id === "beethoven-fifth") {
+          hint = locale === 'es'
+            ? "Pista: El motivo de la Quinta Sinfonía se secuencia un grado más bajo: Sol-Sol-Sol-Mib, luego Fa-Fa-Fa-?. La última nota debe descender un tono desde Mib."
+            : "Hint: The Fifth Symphony motif is sequenced a step lower: G-G-G-Eb, then F-F-F-?. The last note should descend a whole step from Eb.";
+        } else if (activeChallenge.id === "mozart-nachtmusik") {
+          hint = locale === 'es'
+            ? "Pista: El bajo Alberti sigue el patrón grave-aguda-media-aguda del acorde de Sol mayor (Sol-Si-Re). La tercera nota del compás 1 debería ser Re4 (la quinta del acorde)."
+            : "Hint: The Alberti bass follows low-high-middle-high of the G major chord (G-B-D). The third note in measure 1 should be D4 (the fifth of the chord).";
+        } else if (activeChallenge.id === "chopin-prelude4") {
+          hint = locale === 'es'
+            ? "Pista: El bajo desciende cromáticamente por semitonos: Si-La#-La-Sol#-Sol-Fa#. La nota que falta en el compás 2 es la cuarta de esta secuencia."
+            : "Hint: The bass descends chromatically by half steps: B-A#-A-G#-G-F#. The missing note in measure 2 is the fourth in this sequence.";
+        } else if (activeChallenge.id === "vivaldi-spring") {
+          hint = locale === 'es'
+            ? "Pista: La secuencia asciende: el compás 1 culmina en Mi5, el compás 2 debe ascender un grado más en la escala de Mi mayor. Piensa en Do#5."
+            : "Hint: The sequence ascends: measure 1 peaks on E5, measure 2 should go one step higher in the E major scale. Think C#5.";
+        } else if (activeChallenge.id === "schubert-avemaria") {
+          hint = locale === 'es'
+            ? "Pista: El arco melódico asciende a Mi5 y luego desciende suavemente: Re5-Do5-?-Do5. La nota que falta completa el descenso hacia la tónica."
+            : "Hint: The melodic arch rises to E5 then gently descends: D5-C5-?-C5. The missing note completes the stepwise descent toward the tonic.";
+        } else if (activeChallenge.id === "wagner-tristan") {
+          hint = locale === 'es'
+            ? "Pista: El acorde de Tristán se forma con las notas Fa-Si-Re#-Sol#. La nota que falta en el compás 2 es la segunda de esta formación (Si3)."
+            : "Hint: The Tristan chord consists of F-B-D#-G#. The missing note in measure 2 is the second of this formation (B3).";
+        } else if (activeChallenge.id === "brahms-lullaby") {
+          hint = locale === 'es'
+            ? "Pista: La melodía desciende por grados conjuntos: Sol-Sol-Sol, La-La-La, Sol-Fa#-?. La nota que falta continúa el descenso hacia la tónica Do."
+            : "Hint: The melody descends stepwise: G-G-G, A-A-A, G-F#-?. The missing note continues the descent toward the tonic C.";
         }
         theoryClueText.textContent = hint;
         theoryClueText.classList.remove("hidden");
