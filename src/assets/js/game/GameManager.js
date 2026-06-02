@@ -94,7 +94,7 @@ export class GameManager {
     this.notation = new NotationRenderer(containerId, {
       clef: moduleDefinition?.challenge?.clef || "treble",
       timeSignature: moduleDefinition?.challenge?.timeSignature || [4, 4],
-      height: 180,
+      height: 160,
     });
     this.notation.setup();
 
