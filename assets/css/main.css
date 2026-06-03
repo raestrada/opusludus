@@ -2714,6 +2714,14 @@ body.play-page-active {
   filter: drop-shadow(0 0 8px rgba(184, 159, 255, 0.8));
 }
 
+/* Ensure hitboxes are 100% invisible and have no border/stroke inherited from parent groups */
+.note-hitbox {
+  fill: transparent !important;
+  stroke: none !important;
+  pointer-events: all !important;
+}
+
+
 
 
 
