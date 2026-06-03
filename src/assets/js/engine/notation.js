@@ -402,7 +402,8 @@ export class NotationRenderer {
           rect.setAttribute("width", bbox.width + 16);
           rect.setAttribute("height", targetHeight);
           rect.setAttribute("fill", "transparent");
-          rect.setAttribute("style", "cursor: pointer; pointer-events: all;");
+          rect.setAttribute("stroke", "none");
+          rect.setAttribute("style", "cursor: pointer; pointer-events: all; fill: transparent !important; stroke: none !important;");
           
           group.appendChild(rect);
         } catch (e) {
